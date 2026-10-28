@@ -53,7 +53,7 @@ export class NewBrain {
       writeD: v => this.copDWrite(v),
       writeSO: v => { this.copSo = v & 1; },
       writeSK: v => { if (v) this.k402 = ((this.k402 << 1) | this.copSo) & 0xffff; },
-      readSI: () => 0,
+      readSI: () => (this.tapeIn ^ this.copTdo) & 1,
     }) : null;
     this.copDiv = 0;
 
@@ -70,6 +70,12 @@ export class NewBrain {
     this.enrg = 0;
     this.clk = 0;
     this.tvp = 0;
+
+    // Cassette. TPIN is the level coming off the tape; TDO is what the COP
+    // writes to it. SI sees the two XORed together, so a recording reads back
+    // as a steady level while playback is the tape's own signal.
+    this.tapeIn = 0;
+    this.copTdo = 0;
 
     this.tvl = 0;
     this.rv = 0;
@@ -171,6 +177,8 @@ export class NewBrain {
 
   ustA() {
     let data = 0x5c;
+    // ENRG bits 7-6 select what bit 0 reports; 10 is the tape input.
+    data |= ((this.enrg >> 6) & 3) === 2 ? (this.tapeIn & 1) : 1;
     // ENRG bits 5-4 select what bit 1 reports; 00 is the power-up test.
     switch ((this.enrg >> 4) & 3) {
       case 0: data |= this.pwrup ? 0x00 : 0x02; break;
@@ -183,8 +191,8 @@ export class NewBrain {
   }
 
   ustB() {
-    // Serial and tape inputs are idle until those are wired up.
-    return 0x5c;
+    // Bit 5 is the tape input; the V24 and printer lines stay idle.
+    return (0x5c | ((this.tapeIn & 1) << 5)) & 0xff;
   }
 
   clclk() { this.clkint = 1; this.checkInterrupt(); }
@@ -236,6 +244,7 @@ export class NewBrain {
   copDWrite(v) {
     const k4 = (v & 1) ? 0 : 1;
     const k6 = (v & 4) ? 0 : 1;
+    this.copTdo = (v >> 1) & 1;   // D1 is TDO, the tape output
 
     if (k4) {
       this.k405 = 0;

@@ -59,3 +59,8 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   from the cassette — that counter is how the COP measures the width of each
   half cycle coming off the tape. SO also carried SIO's bottom bit instead of
   its top one.
+- Cassette input was not connected. `ustB` returned a constant with the tape
+  bit stubbed out, `ustA` had no case for TPIN at all, and the COP's SI pin
+  was tied to zero, so the ROM had no way to see a tape even in principle. SI
+  now reads TPIN XORed with TDO, as the hardware wires it, and both status
+  ports report the tape line.
