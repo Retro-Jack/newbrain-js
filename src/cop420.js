@@ -199,6 +199,13 @@ export class COP420 {
       if (bd === 0x0f) this.doSkip();
       return;
     }
+    // LQID and JID reach here on their SECOND cycle, after control has already
+    // been transferred to the table entry. They must NOT fall through to the
+    // generic JP handler below — LQID loads Q from the table byte and returns,
+    // JID jumps to it. Getting this wrong corrupts the stack.
+    if (op === 0xbf) { this.writeQ(operand); this.pop(); return; }   // LQID
+    if (op === 0xff) { this.pc = (this.pc & 0x300) | operand; return; } // JID
+
     if ((op & 0xc8) === 0x08) { this.lbi(op); return; }   // LBI 0x08-0x0f etc
     if (hi === 0x50) { this.aisc(op); return; }           // AISC (0x51-0x5f)
     if (hi === 0x70) { this.ramW(this.b, lo); this.incBd(); return; } // STII

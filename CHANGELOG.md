@@ -26,6 +26,10 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed
+- COP420: `LQID` and `JID` were falling through to the generic `JP` handler
+  on their second cycle, so instead of loading Q from the jump-table entry
+  and returning, they jumped — corrupting the return stack. The COP now
+  reaches far more of its microcode and drives the D port.
 - Display started 122 bytes into video RAM and used an 88-byte row stride;
   previously the first 122 bytes were rendered as characters, which put a row
   of blocks across the top of the screen and lost the first six characters of
