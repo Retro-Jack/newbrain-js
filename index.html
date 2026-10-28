@@ -1,0 +1,214 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NewBrain</title>
+<style>
+  @font-face {
+    font-family:'Segment16C';
+    /* Segment16C by Daniel Wikholm, CC0 public domain. Subsetted here to
+       printable ASCII plus U+2588, and converted from the CC0 TTF — the woff
+       that shipped alongside it was a third-party conversion Chrome rejects
+       outright ("Invalid font data"), despite a valid wOFF header. */
+    src:url('art/fonts/Segment16C-Regular.woff2') format('woff2'),
+        url('art/fonts/Segment16C-Regular.woff')  format('woff');
+    font-display:block;
+  }
+  :root { --vfd:#ffb347; }
+  html,body { margin:0; height:100%; background:#1a1a1e; }
+  /* The stage keeps the 1920x1080 artwork's proportions, so every region can
+     be positioned in percentages taken straight off the measured artwork. */
+  #stage {
+    position:relative; width:100%; max-width:1920px; margin:0 auto;
+    aspect-ratio:1920/1080;
+    background:#1a1a1e;
+  }
+  /* CRT sits BEHIND the artwork, showing through the transparent cut-out. */
+  /* Position and size come from art/regions.json, measured off the composed
+     artwork, so the page never carries hand-tuned numbers. */
+
+  /* Solid black behind the aperture, pushed out past the measured rect so it
+     tucks under the bezel. Without it the rounded corners of the aperture show
+     the page background instead of a dark screen. */
+  #screenbg { position:absolute; background:#000; z-index:0; }
+  #crt { position:absolute; background:transparent; z-index:1; }
+  #layout {
+    position:absolute; inset:0; width:100%; height:100%;
+    z-index:2; pointer-events:none;
+  }
+  /* VFD text is drawn ON TOP of the artwork, over the tube. */
+  #vfd { position:absolute; z-index:3; image-rendering:pixelated; }
+  #hud {
+    position:fixed; left:8px; bottom:8px; z-index:9;
+    font:11px ui-monospace,monospace; color:#7a7a85;
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="screenbg"></div>
+  <canvas id="crt" width="640" height="250"></canvas>
+  <img id="layout" src="art/layout.png" alt="">
+  <canvas id="vfd" width="320" height="30"></canvas>
+</div>
+<div id="hud">booting&hellip;</div>
+
+<script type="module">
+import { NewBrainSystem, CPU_HZ } from './src/system.js';
+import { SCREEN_W, SCREEN_H } from './src/newbrain.js';
+
+const hud = document.getElementById('hud');
+const crtEl = document.getElementById('crt');
+const crt = crtEl.getContext('2d', { alpha:true });
+
+// The machine's frame is drawn at its native 640x250 on an offscreen canvas,
+// then blitted to the visible one at whatever size the bezel's hole is.
+//
+// Doing that by hand rather than leaving it to CSS, because the picture is
+// WIDER than its box on most windows (640 across a ~580px hole) and
+// `image-rendering: pixelated` on a downscale drops whole columns — which ate
+// parts of glyphs. Nearest-neighbour is only correct when magnifying.
+const src = document.createElement('canvas');
+src.width = SCREEN_W; src.height = SCREEN_H;
+const sctx = src.getContext('2d', { alpha:false });
+const img = sctx.createImageData(SCREEN_W, SCREEN_H);
+
+function sizeCanvas() {
+  const r = crtEl.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width  * dpr));
+  const h = Math.max(1, Math.round(r.height * dpr));
+  if (crtEl.width !== w || crtEl.height !== h) { crtEl.width = w; crtEl.height = h; }
+  // Smooth only where we are shrinking; keep it crisp where we are enlarging.
+  crt.imageSmoothingEnabled = (w < SCREEN_W) || (h < SCREEN_H);
+  crt.imageSmoothingQuality = 'high';
+}
+sizeCanvas();
+addEventListener('resize', sizeCanvas);
+new ResizeObserver(sizeCanvas).observe(crtEl);
+
+// Place the CRT and VFD from the measured regions. The aperture has rounded
+// corners, so the CRT is inset slightly inside its bounding box or the bezel
+// clips the first and last columns.
+// Regions come from art/regions.json, computed by art/compose.py following
+// tools/bezel-test/README.md: the black backing fills the hole's bounding box
+// so the rounded corners read as screen, and the picture goes in the largest
+// rectangle INSCRIBED in the hole so the curve cannot clip the edge columns.
+// No hand-tuned inset or bleed — both rectangles are measured.
+const reg = await fetch('art/regions.json').then(r => r.json());
+{
+  const place = (el, r) => {
+    el.style.left = r.left + '%';   el.style.top    = r.top + '%';
+    el.style.width = r.width + '%'; el.style.height = r.height + '%';
+  };
+  place(document.getElementById('screenbg'), reg.pct.hole);
+  place(document.getElementById('crt'),      reg.pct.crt);
+  const vf = document.getElementById('vfd');
+  place(vf, reg.pct.vfd);
+  vf.width = reg.vfd.w; vf.height = reg.vfd.h;
+}
+
+const names = ['aben191.ic6','cdi3.ic7','ef iss 1.ic8','char eprom iss 1.ic453'];
+const [ab, cd, ef, chargen] = await Promise.all(
+  names.map(n => fetch('roms/' + encodeURIComponent(n))
+    .then(r => { if (!r.ok) throw new Error(n + ': HTTP ' + r.status); return r.arrayBuffer(); })
+    .then(b => new Uint8Array(b)))
+);
+
+const sys = new NewBrainSystem({ ab, cd, ef, chargen });
+window.sys = sys;   // handy from the console
+
+// Pace against the clock, not the display: rAF fires at the monitor's refresh
+// rate, which on a 180Hz panel ran the machine 3.6x too fast.
+const FRAME_MS = 1000 / 50;
+let acc = 0, prev = performance.now();
+// ---- VFD ------------------------------------------------------------------
+// 16 characters, drawn over the tube in the artwork. The panel is a 14-segment
+// starburst, so Jack's Segment16C renders it far more honestly than a normal
+// font would; unlit segments are drawn faintly underneath, as the real tube
+// shows them.
+const vfdEl  = document.getElementById('vfd');
+const vfdCtx = vfdEl.getContext('2d');
+// Brightness is a single gain so it can be tuned in one place. Scaling the
+// channels alone would clamp green (already 255) and drag the hue toward cyan,
+// so the gain is split: part into the channels, the rest into a bloom, which
+// is also closer to how a real tube reads.
+// Brightness as a single gain, tunable in one place.
+//
+// A literal x1.25 of luminance is not available: the base green is already at
+// 255, and rgb(110,255,200) is luminance ~220 against a 255 ceiling, so pure
+// white is only +16%. Scaling the channels therefore does nothing useful — it
+// clamps green and skews the hue. Instead the gain is spent on the two things
+// that do read as brighter on an emissive display: lifting the colour toward
+// white, and blooming the glyph.
+const VFD_GAIN = 1.25;
+// Sampled from a photograph of a real lit NewBrain tube (brightest 2% of the
+// lit segments, normalised to full green): the phosphor is a warmer, yellower
+// green than the cyan-green guess it replaces. Measured contrast against the
+// unlit tube was 14x, which is why the unlit segments stay very faint.
+const VFD_BASE = [178, 255, 202];
+const t = Math.min(1, VFD_GAIN - 1);                       // lift toward white
+const lit = VFD_BASE.map(v => Math.round(v + (255 - v) * t));
+const VFD_LIT   = `rgb(${lit.join(',')})`;
+const VFD_UNLIT = `rgba(${VFD_BASE.join(',')},${(0.085 * VFD_GAIN).toFixed(4)})`;
+const VFD_GLOW  = (VFD_GAIN - 1) * 18;   // px of bloom, the rest of the gain
+let vfdPrev = null, vfdReady = false;
+
+document.fonts.load('16px Segment16C').then(() => { vfdReady = true; vfdPrev = null; });
+
+function drawVfd() {
+  if (!vfdReady) return;
+  const text = sys.machine.vfdText();
+  if (text === vfdPrev) return;
+  vfdPrev = text;
+
+  const W = vfdEl.width, H = vfdEl.height, N = 16, cw = W / N;
+  vfdCtx.clearRect(0, 0, W, H);
+  vfdCtx.textAlign = 'center';
+  vfdCtx.textBaseline = 'middle';
+  vfdCtx.font = Math.round(H * 0.92) + 'px Segment16C';
+
+  for (let i = 0; i < N; i++) {
+    const x = cw * (i + 0.5), y = H / 2;
+    // every segment, faint - what an unlit cell actually looks like
+    vfdCtx.fillStyle = VFD_UNLIT;
+    vfdCtx.fillText('\u2588', x, y);
+    const ch = text[i];
+    if (ch && ch !== ' ') {
+      vfdCtx.fillStyle = VFD_LIT;
+      vfdCtx.shadowColor = VFD_LIT;
+      vfdCtx.shadowBlur = VFD_GLOW;
+      vfdCtx.fillText(ch, x, y);
+      vfdCtx.shadowBlur = 0;
+    }
+  }
+}
+
+let frames = 0, last = performance.now();
+function frame() {
+  const now = performance.now();
+  acc += Math.min(now - prev, 200);   // cap so a background tab can't sprint
+  prev = now;
+  let ran = 0;
+  while (acc >= FRAME_MS && ran < 4) { sys.runFrame(); acc -= FRAME_MS; ran++; }
+  drawVfd();
+  sys.machine.renderInto(img.data);
+  sctx.putImageData(img, 0, 0);
+  crt.clearRect(0, 0, crtEl.width, crtEl.height);
+  crt.drawImage(src, 0, 0, SCREEN_W, SCREEN_H, 0, 0, crtEl.width, crtEl.height);
+
+  if (++frames % 25 === 0) {
+    const now = performance.now();
+    const t = performance.now(); const fps = 25000 / (t - last); last = t;
+    const m = sys.machine;
+    hud.textContent = `t=${sys.seconds.toFixed(1)}s  ${fps.toFixed(0)}fps  ` +
+      `pwrup=${m.pwrup} tvp=${m.tvp} ${m.c80l ? 80 : 40}col  PC=0x${sys.pc.toString(16).toUpperCase()}`;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

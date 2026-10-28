@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------------------
+# ROMs, BIOS and firmware — never committed.
+# ---------------------------------------------------------------------------
+# The NewBrain's ROMs are Grundy's, and the COP420 microcode is National's.
+# Neither is ours to redistribute. ROMS.txt says what is needed and where it
+# goes; the emulator reports plainly when a file is absent.
+roms/*
+!roms/.gitkeep
+
+# ---------------------------------------------------------------------------
+# Upstream reference sources, kept locally while porting.
+# ---------------------------------------------------------------------------
+# BSD-3-Clause MAME sources, consulted for hardware behaviour. Not ours and
+# not needed to build or run this; ATTRIBUTION.md says where to get them.
+reference/
+
+# Working files
+screen.raw
+screen.png
+art/src/
+node_modules/
+
+# macOS / editor junk
+.DS_Store
+._*
+*~
+.claude/

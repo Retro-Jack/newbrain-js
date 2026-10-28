@@ -1,0 +1,33 @@
+NewBrain emulator: ROMs and firmware
+====================================
+
+This repository carries no ROMs. The NewBrain's system ROMs belong to Grundy
+Business Systems, and the keyboard controller's microcode to National
+Semiconductor; neither is ours to redistribute.
+
+Five files are needed. Put them in roms/ beside this file, named exactly as
+below, lower case. They are the same files MAME's "newbrain" set uses, so if
+you already have that set you have these.
+
+  aben191.ic6              8192 bytes   CRC32 b7be8d89   ROM A/B, maps at 0xA000
+  cdi3.ic7                 8192 bytes   CRC32 6b4d9429   ROM C/D, maps at 0xC000
+  ef iss 1.ic8             8192 bytes   CRC32 20dd0b49   ROM E/F, maps at 0xE000
+  char eprom iss 1.ic453   4096 bytes   CRC32 6a38b7a2   character generator
+  cop420-guw.ic419         1024 bytes   CRC32 a1388ee7   COP420 microcode
+
+Note the spaces in two of the names; they are the names MAME uses.
+
+The machine boots to BASIC with the first four. The fifth drives the keyboard
+and the VF display, and without it the machine still boots but cannot be
+typed into.
+
+A WORD ON THE COP420 DUMP
+-------------------------
+No verified good dump of cop420-guw.ic419 is known. MAME marks the circulating
+one BAD_DUMP and repairs two bytes before running it, and this emulator does
+the same:
+
+    offset 0x20a   0xc2 -> 0xc6     bit 2 dropped in the DISPCOM entry
+    offset 0x231   0xa2 -> 0xa6     bit 2 dropped in the VFD flash counter
+
+Those are applied in memory. Your file is never modified.
