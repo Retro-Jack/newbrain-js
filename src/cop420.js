@@ -171,6 +171,12 @@ export class COP420 {
     const hi = op & 0xf0, lo = op & 0x0f;
 
     // ---- single-byte groups the table repeats ----
+    // LBI must be tested FIRST. In each 0x10 block the layout is
+    //   0-3 misc | 4-7 XIS/LD/X/XDS | 8-f LBI
+    // and the XIS/LD/X/XDS masks below also match 0x0c-0x0f, 0x1c-0x1f and so
+    // on, so testing them first silently stole sixteen LBI opcodes.
+    if (op < 0x40 && (op & 0x08)) { this.lbi(op); return; }
+
     if ((op & 0xc7) === 0x04) {  // XIS  0x04,0x14,0x24,0x34
       const r = op & 0x30, t = this.ramR(this.b);
       this.ramW(this.b, this.a); this.a = t;
@@ -206,7 +212,10 @@ export class COP420 {
     if (op === 0xbf) { this.writeQ(operand); this.pop(); return; }   // LQID
     if (op === 0xff) { this.pc = (this.pc & 0x300) | operand; return; } // JID
 
-    if ((op & 0xc8) === 0x08) { this.lbi(op); return; }   // LBI 0x08-0x0f etc
+    // 0x50 is CAB, not AISC — AISC is 0x51-0x5f. Decoding 0x50 as "AISC 0"
+    // makes it a no-op, and CAB is what loads A into B's low nibble before an
+    // OBD, so the keyboard/VFD scan never advanced off row 0.
+    if (op === 0x50) { this.b = (this.b & 0x30) | this.a; return; }  // CAB
     if (hi === 0x50) { this.aisc(op); return; }           // AISC (0x51-0x5f)
     if (hi === 0x70) { this.ramW(this.b, lo); this.incBd(); return; } // STII
     if (op >= 0x80)  { this.jp(op); return; }

@@ -29,12 +29,11 @@ distributed here.
 | Z80, memory map, ROM paging | working |
 | CRT, 40/80 column, green phosphor | working |
 | VF display, 16 characters | working |
-| Keyboard | **not yet** — the COP420 runs but does not scan |
+| Keyboard | working — COP420 scans the matrix |
 | Cassette and disc loading | not started |
 | Sound | the machine has none |
 
-It boots to `NEWBRAIN BASIC` / `READY` and you can watch it, but not yet type
-at it.
+It boots to `NEWBRAIN BASIC` / `READY` and you can type at it.
 
 ### Accuracy notes
 
