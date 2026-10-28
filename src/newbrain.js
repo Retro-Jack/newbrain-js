@@ -284,9 +284,11 @@ export class NewBrain {
   static OUTBUFF = 0x3e;
   static VFD_COLS = 16;
 
+  // OUTBUFF is filled right-to-left: the ROM pushes characters in from the
+  // right-hand end of the panel, so the buffer reads back reversed.
   vfdText() {
     let s = '';
-    for (let i = 0; i < NewBrain.VFD_COLS; i++) {
+    for (let i = NewBrain.VFD_COLS - 1; i >= 0; i--) {
       const b = this.ram[NewBrain.OUTBUFF + i] & 0x7f;
       s += (b >= 32 && b < 127) ? String.fromCharCode(b) : ' ';
     }
