@@ -10,6 +10,7 @@
 // touching the machine.
 
 import { COP420 } from './cop420.js';
+import { encodeTape, TapePlayer } from './tape.js';
 
 export const SCREEN_W = 640;
 export const SCREEN_H = 250;
@@ -76,6 +77,17 @@ export class NewBrain {
     // as a steady level while playback is the tape's own signal.
     this.tapeIn = 0;
     this.copTdo = 0;
+
+    // Elapsed T-states, which the cassette is timed against.
+    this.cycles = 0;
+    this.tape = null;
+
+    // Cassette motor. The COP drives it through G1 (and G3 for the second
+    // deck) gated with K6, by way of a relay that takes a moment to drop out.
+    // The ROM stops the motor between blocks, so the tape must stop with it.
+    this.copG = 0x0f;
+    this.motor = false;
+    this.motorOffAt = -1;
 
     this.tvl = 0;
     this.rv = 0;
@@ -215,6 +227,12 @@ export class NewBrain {
 
   // The COP runs at 16MHz/4/16, so one COP cycle per 16 Z80 cycles.
   stepCop(z80Cycles) {
+    this.cycles += z80Cycles;
+    if (this.motorOffAt >= 0 && this.cycles >= this.motorOffAt) {
+      this.motor = false;
+      this.motorOffAt = -1;
+    }
+    if (this.tape && this.motor) this.tapeIn = this.tape.advance(z80Cycles);
     if (!this.cop) return;
     this.copDiv += z80Cycles;
     while (this.copDiv >= 16) { this.copDiv -= 16; this.cop.step(); }
@@ -233,7 +251,23 @@ export class NewBrain {
   // IN0 is keyboard bit 2; the rest are bus strobes we hold inactive.
   copInRead() { return 0xe | ((this.k403q >> 2) & 1); }
 
+  // Relay dropout, assuming a 500 ohm coil and 47uF: it falls out at a fifth
+  // of the coil voltage, which is about 38ms.
+  static MOTOR_DROPOUT = Math.round(500 * 47e-6 * Math.log(5) * 4e6);
+
+  updateMotor() {
+    const drive = !((this.copG >> 1) & 1) && !this.copK6;
+    if (drive) {
+      this.motor = true;
+      this.motorOffAt = -1;
+    } else if (this.motor && this.motorOffAt < 0) {
+      this.motorOffAt = this.cycles + NewBrain.MOTOR_DROPOUT;
+    }
+  }
+
   copGWrite(v) {
+    this.copG = v & 0x0f;
+    this.updateMotor();
     const copint = (v & 1) ? 0 : 1;
     if (copint !== this.copint) { this.copint = copint; this.checkInterrupt(); }
   }
@@ -262,6 +296,7 @@ export class NewBrain {
       this.digits[this.k405 & 0x0f] = NewBrain.vfdBitswap(this.k402) & 0x3fff;
     }
     this.copK6 = k6;
+    this.updateMotor();
   }
 
   static vfdBitswap(v) {
@@ -279,6 +314,20 @@ export class NewBrain {
     else      this.keys[row] &= ~(1 << col);
   }
   clearKeys() { this.keys.fill(0); }
+
+  // ---- cassette ------------------------------------------------------------
+  // Attaches a tape image. Nothing intercepts the COP: the image is turned
+  // into a signal and presented at TPIN, and the real microcode reads it.
+  loadTape(bytes, opts) {
+    this.tape = bytes && bytes.length
+      ? new TapePlayer(encodeTape(bytes, opts))
+      : null;
+  }
+
+  ejectTape() { this.tape = null; this.tapeIn = 0; }
+
+  // How far through the tape the playback has run, 0 to 1.
+  get tapeProgress() { return this.tape ? this.tape.progress : 0; }
 
   // ---- VFD ----------------------------------------------------------------
   // The 16-character panel hangs off the COP420, which the Z80 feeds with a
