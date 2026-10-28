@@ -113,6 +113,14 @@ export class COP420 {
 
     if (!this.secondByte) this.prevPc = this.pc;
 
+    // Sync pulse. With EN0 clear, SK carries a clock that ticks once per
+    // instruction whenever SKL is set — this is what shifts the VFD's serial
+    // register, so without it the display is never clocked at all.
+    if (!(this.en & 0x01) && this.skl) {
+      this.io.writeSK?.(0);
+      this.io.writeSK?.(1);
+    }
+
     const operand = this.rom[this.pc & 0x3ff];
     this.pc = (this.pc + 1) & 0x3ff;
     if (!this.secondByte) this.opcode = operand;
