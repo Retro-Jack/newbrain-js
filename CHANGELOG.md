@@ -51,3 +51,11 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - CRT blitted through an offscreen canvas with resampling chosen from the
   actual ratio; `image-rendering: pixelated` was dropping columns whenever the
   picture was wider than its box, taking parts of glyphs with it.
+- COP420: SIO's two modes were the wrong way round. EN0 set makes SIO an
+  asynchronous binary counter that decrements on each low-going pulse at SI,
+  debounced over a four-deep sample history; EN0 clear makes it a shift
+  register taking SI into its bottom bit. The counter was the one being driven
+  as a shift register, and it ignored SI altogether, so nothing could be read
+  from the cassette — that counter is how the COP measures the width of each
+  half cycle coming off the tape. SO also carried SIO's bottom bit instead of
+  its top one.

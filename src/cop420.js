@@ -34,7 +34,7 @@ export class COP420 {
     this.a = 0; this.b = 0; this.c = 0;
     this.en = 0; this.g = 0; this.q = 0;
     this.sa = 0; this.sb = 0; this.sc = 0;
-    this.sio = 0; this.skl = 1;
+    this.sio = 0; this.si = 0; this.skl = 1;
     this.t = 0; this.sktLatch = 0;
     this.il = 0;
     this.skip = false; this.lastSkip = false; this.skipLbi = 0;
@@ -78,15 +78,23 @@ export class COP420 {
   }
 
   serialTick() {
+    const si = (this.io.readSI?.() ?? 0) & 1;
+
     if (this.en & 0x01) {
-      // serial mode: SIO is a shift register clocked from SI
-      const si = (this.io.readSI?.() ?? 0) & 1;
-      this.sio = ((this.sio << 1) | si) & 0x0f;
-      this.io.writeSO?.((this.en & 0x08) ? (this.sio & 1) : 0);
-    } else {
-      // counter mode: SIO counts, SO carries the EN3 latch
-      this.sio = (this.sio + 1) & 0x0f;
+      // EN0=1: SIO is an asynchronous binary counter, decrementing on every
+      // low-going pulse at SI. A pulse has to hold each level for two
+      // instruction cycles, so the edge is taken from the pattern 1100 in a
+      // 4-deep history of SI. This is how the cassette is read: the COP counts
+      // pulses to measure the width of each half cycle coming off the tape.
       this.io.writeSO?.((this.en & 0x08) ? 1 : 0);
+      this.si = ((this.si << 1) | si) & 0x0f;
+      if (this.si === 0x0c) this.sio = (this.sio - 1) & 0x0f;
+    } else {
+      // EN0=0: SIO is a shift register, shifting left one place per
+      // instruction cycle with SI entering at the bottom. SO carries the top
+      // bit when EN3 enables it.
+      this.io.writeSO?.((this.en & 0x08) ? ((this.sio >> 3) & 1) : 0);
+      this.sio = ((this.sio << 1) | si) & 0x0f;
     }
   }
 
