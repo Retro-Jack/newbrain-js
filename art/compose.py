@@ -111,10 +111,17 @@ hole = to_canvas(oL, oT, oR, oB)
 crt  = to_canvas(rL, rT, rR, rB)
 assert hole["y"] + hole["h"] <= CUB_Y + cub.height + 1, "hole escapes the bezel"
 
-# VFD: measured on the source photo (the tube's lit cell run), mapped through
-# the same scale and offset. Threshold hunting fails here - the photo lights
-# the tube very unevenly - so these come from the artwork directly.
-SRC_VFD = {"x": 558, "y": 98, "w": 335, "h": 32}
+# VFD: the tube's sixteen cells on the source photo, mapped through the same
+# scale and offset. Hunting for the dividers by threshold does fail - the photo
+# lights the tube unevenly and the glass is scratched - but detrending the
+# column profile and autocorrelating it gives the pitch cleanly: 21.0px, with
+# boundaries at 552, 573, 594 ... 888. Sixteen cells is therefore 552..888.
+# The lit band is rows 101..130; the bright rows at either end of that are the
+# cells' own rims, not glyph space.
+#
+# The earlier figures were half a cell out horizontally, which told as glyphs
+# sitting across the dividers rather than inside the cells.
+SRC_VFD = {"x": 552, "y": 101, "w": 336, "h": 30}
 vfd = {
     "x": round(NB_X + SRC_VFD["x"] * nb_s),
     "y": round(NB_Y + SRC_VFD["y"] * nb_s),

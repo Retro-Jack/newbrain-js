@@ -77,6 +77,12 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   from is a French machine — AZERTY, with QSDFGHJKLM beneath — so the picture
   was teaching a layout the emulator does not map. The VF tube is unchanged,
   and the measured regions come out identical, so nothing else moved.
+- VF glyphs sit inside the tube's cells. The region had been eyeballed off the
+  artwork and was about a third of a cell out horizontally and three rows high,
+  so the characters straddled the dividers. The photo defeats threshold hunting
+  — uneven lighting, scratched glass — but detrending the column profile and
+  autocorrelating it gives the pitch cleanly at 21.0px, boundaries at 552
+  through 888, and the lit band at rows 101..130.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed
