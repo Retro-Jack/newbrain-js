@@ -450,9 +450,11 @@ export class NewBrain {
           // and the bezel here is a Microvitec CUB: a colour monitor, which
           // fed a monochrome signal drives all three guns together and shows
           // white. Kept a little under full white so the glyphs read as
-          // phosphor rather than backlight.
-          const v = on ? 0xe8 : 0;
-          const r = v, g = v, b = v;
+          // phosphor rather than backlight, and warmed slightly: a tube's
+          // white is never a perfect neutral, and a cold one sits badly
+          // against the brown surround. Luminance is unchanged from the
+          // neutral it replaces (232 either way) — only the tint moves.
+          const r = on ? 0xee : 0, g = on ? 0xe8 : 0, b = on ? 0xdc : 0;
           rgba[p++] = r; rgba[p++] = g; rgba[p++] = b; rgba[p++] = 255;
           if (columns === 40) {
             rgba[p++] = r; rgba[p++] = g; rgba[p++] = b; rgba[p++] = 255;

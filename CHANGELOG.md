@@ -64,6 +64,9 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   display's, never the computer's. The bezel here is a Microvitec CUB, which
   is a colour monitor, and a colour monitor fed a monochrome signal shows
   white. The code had claimed the CUB was a green monitor, which it is not.
+  The white is warmed a little — a tube's white is never a perfect neutral,
+  and a cold one sits badly against the brown surround — at the same
+  luminance, so only the tint moves.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed
