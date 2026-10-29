@@ -83,6 +83,11 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   — uneven lighting, scratched glass — but detrending the column profile and
   autocorrelating it gives the pitch cleanly at 21.0px, boundaries at 552
   through 888, and the lit band at rows 101..130.
+- ATTRIBUTION says what the machine artwork is made of. The body and VF tube
+  are a Wikimedia Commons photograph by Rama & Musée Bolo, CC BY-SA 2.0 FR,
+  which `layout.png` inherits as a derivative; the replacement keyboard is from
+  the Home Computer Museum, which states no licence, and that is recorded as
+  such rather than glossed.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed

@@ -85,9 +85,30 @@ The VF display's 16-segment glyphs.
 
 ### Bezel artwork — `art/`
 
-`layout.png` is composited by [`art/compose.py`](art/compose.py) from two
-photographs: a Microvitec CUB monitor and a NewBrain. Both are from the
-GenX-DOS shared bezel set.
+`layout.png` is composited by [`art/compose.py`](art/compose.py) from a
+Microvitec CUB monitor frame and a picture of the machine.
+
+**The machine carries a binding obligation.** Its body and VF tube are from
+[File:New Brain IMG 4244.jpg](https://commons.wikimedia.org/wiki/File:New_Brain_IMG_4244.jpg)
+on Wikimedia Commons, by **Rama & Musée Bolo**, of a machine on display at the
+Musée Bolo, EPFL, Lausanne.
+
+- Licence: **CC BY-SA 2.0 FR**, or CeCILL v2 at the user's choice
+- Share-alike: `art/layout.png` is a derivative and inherits it. That is a
+  condition on the artwork, not on the emulator — `src/` stays GPL-3.0.
+
+That photograph is of a **French** NewBrain, and its keyboard is AZERTY. Since
+a picture of the machine is the one place a reader looks to find where a key
+is, and the emulator maps a QWERTY matrix, the keyboard was replaced with one
+taken from the Home Computer Museum's
+[NewBrain page](https://www.homecomputermuseum.nl/en/collectie/grundy-business-systems-ltd/grundy-newbrain/).
+**That site states no licence and credits no photographer**, so unlike the
+Commons image it is not source-cleared; it is recorded here so that it is at
+least known, and the removal offer at the top of this file applies to it as
+much as to anything else.
+
+The Microvitec CUB frame comes from the GenX-DOS shared bezel set, which does
+not provenance-track its frames.
 
 ---
 
