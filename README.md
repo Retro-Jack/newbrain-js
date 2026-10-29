@@ -60,6 +60,14 @@ machine code or assembler output rather than BASIC — `.COM`, `.BIN`, `.S`,
 `.O` — which BASIC's `LOAD` cannot accept whatever the tape does; the bytes
 arrive intact and the ROM declines them.
 
+## What this emulates
+
+A NewBrain AD as it left the factory: the machine, its VF display, its
+keyboard and its cassette port. The disc system was an expansion card, bought
+separately and fitted by a minority of owners, and it is deliberately not
+here — a stock machine is a cleaner thing to be than a particular owner's
+collection of add-ons.
+
 ## State
 
 | | |
@@ -70,7 +78,7 @@ arrive intact and the ROM declines them.
 | Keyboard | working — COP420 scans the matrix |
 | Cassette loading | working — 103 of 118 tape images load byte for byte |
 | Cassette saving | working — `SAVE` then **save…** downloads a tape file |
-| Disc loading | not started — needs the FDC expansion |
+| Disc loading | not emulated — see below |
 | Sound | the machine has none |
 
 It boots to `NEWBRAIN BASIC` / `READY` and you can type at it.

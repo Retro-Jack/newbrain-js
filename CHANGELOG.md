@@ -113,6 +113,9 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   carrying a zeroed checksum, and is now reported as damaged rather than
   quietly omitted. 103 of 118 load byte for byte, where the old filter said
   100 of 115.
+- README says what is being emulated: a NewBrain AD as it shipped. The disc
+  system was an expansion card rather than part of the machine, so its absence
+  is a decision rather than a gap.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed
