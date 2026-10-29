@@ -24,11 +24,15 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+# The runner is pinned rather than left on ubuntu-latest: that label began
+# migrating to Ubuntu 26 on 19/10/2026, and a build that publishes a live site
+# should not change underneath us on someone else's schedule.
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Unpack the ROMs
         env:
@@ -44,16 +48,16 @@ jobs:
       - name: Trim what the site does not serve
         run: rm -rf .github test reference
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: .
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

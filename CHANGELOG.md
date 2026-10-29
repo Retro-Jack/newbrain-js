@@ -132,6 +132,13 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   terminator and the frame end against each other: each of them was fixed
   once by a change that broke the other, so neither is safe to check alone.
 
+### Changed
+- Pages workflow: `actions/checkout` v4 to v7, `actions/upload-pages-artifact`
+  v3 to v5 and `actions/deploy-pages` v4 to v5, all of which now run on
+  Node 24 — the old majors were being force-migrated off the deprecated
+  Node 20 on every build. The runner is pinned to `ubuntu-26.04` instead of
+  `ubuntu-latest`, which began migrating to Ubuntu 26 on 19/10/2026.
+
 ### Fixed
 - The display ran past the end of the frame. A program marks the end of its
   screen with two 00 bytes, and nothing below that is meant to be drawn; the
