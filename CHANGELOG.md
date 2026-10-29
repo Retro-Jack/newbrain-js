@@ -87,7 +87,10 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   are a Wikimedia Commons photograph by Rama & Musée Bolo, CC BY-SA 2.0 FR,
   which `layout.png` inherits as a derivative; the replacement keyboard is from
   the Home Computer Museum, which states no licence, and that is recorded as
-  such rather than glossed.
+  such rather than glossed. The CUB frame is jsbeeb's `cub-monitor.png`, byte
+  for byte, GPL-3.0-or-later — which puts a CC BY-SA image and a GPL image in
+  one composite, so the Commons file's alternative CeCILL v2 offer is the one
+  taken, that being the GPL-compatible of the two.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed

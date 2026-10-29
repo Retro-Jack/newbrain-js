@@ -107,8 +107,21 @@ Commons image it is not source-cleared; it is recorded here so that it is at
 least known, and the removal offer at the top of this file applies to it as
 much as to anything else.
 
-The Microvitec CUB frame comes from the GenX-DOS shared bezel set, which does
-not provenance-track its frames.
+**The Microvitec CUB frame is jsbeeb's.** It is `dist/images/cub-monitor.png`
+from Matt Godbolt's BBC Micro emulator, byte for byte, as served by the BBC
+Computer Literacy Project at <https://clp.bbcrewind.co.uk/jsbeeb/>.
+
+- Source: https://github.com/mattgodbolt/jsbeeb
+- Licence: **GPL-3.0-or-later**
+
+▲ **A note on combining the two.** CC BY-SA 2.0 and the GPL are not compatible
+licences, and `layout.png` is one image made from both. The Commons file is
+offered under *either* CC BY-SA 2.0 FR *or* **CeCILL v2**, at the user's
+choice, and CeCILL v2 is written to be GPL-compatible — so **CeCILL v2 is the
+option taken here**, which puts the whole composite on GPL-compatible terms
+alongside the emulator. Attribution to Rama & Musée Bolo is given either way.
+This is a reading, not legal advice; it is written down so the reasoning can
+be checked rather than assumed.
 
 ---
 
