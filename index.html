@@ -25,21 +25,37 @@
     aspect-ratio:1920/1080;
     background:#1a1a1e;
   }
-  /* CRT sits BEHIND the artwork, showing through the transparent cut-out. */
-  /* Position and size come from art/regions.json, measured off the composed
-     artwork, so the page never carries hand-tuned numbers. */
+  /* The monitor and the machine are two independent parts, each absolutely
+     placed on the stage and each carrying its own screen. A part's container
+     IS its image box — the image is in flow at width:100%, so the box takes
+     the image's aspect — which is what lets the screen regions be given as
+     percentages of the part rather than of the page. Move or resize a part
+     and its screen goes with it. */
+  #monitor, #machine { position:absolute; }
+  #monitor img, #machine img { display:block; width:100%; height:auto; pointer-events:none; }
 
-  /* Solid black behind the aperture, pushed out past the measured rect so it
-     tucks under the bezel. Without it the rounded corners of the aperture show
-     the page background instead of a dark screen. */
+  /* Within the monitor: black backing, then the picture, then the bezel over
+     both. The backing fills the aperture's bounding box so its rounded
+     corners read as screen rather than page background. */
   #screenbg { position:absolute; background:#000; z-index:0; }
-  #crt { position:absolute; background:transparent; z-index:1; }
-  #layout {
-    position:absolute; inset:0; width:100%; height:100%;
-    z-index:2; pointer-events:none;
+  #crt      { position:absolute; background:transparent; z-index:1; }
+  #monitor img { position:relative; z-index:2; }
+
+  /* Within the machine: the VF text sits over the tube. */
+  #machine img { position:relative; z-index:0; }
+  #vfd { position:absolute; z-index:1; image-rendering:pixelated; }
+
+  /* Too narrow to stand side by side: stack them and let each take the width.
+     Nothing about the screens needs saying again — they are placed within
+     their own part, so they follow. */
+  @media (max-width: 900px) {
+    #stage { aspect-ratio:auto; height:auto; padding:16px 0; }
+    #monitor, #machine {
+      position:relative;
+      left:0 !important; top:0 !important; width:92% !important;
+      margin:0 auto 20px;
+    }
   }
-  /* VFD text is drawn ON TOP of the artwork, over the tube. */
-  #vfd { position:absolute; z-index:3; image-rendering:pixelated; }
   #hud {
     position:fixed; left:8px; bottom:8px; z-index:9;
     font:11px ui-monospace,monospace; color:#7a7a85;
@@ -86,10 +102,15 @@
 </head>
 <body>
 <div id="stage">
-  <div id="screenbg"></div>
-  <canvas id="crt" width="640" height="250"></canvas>
-  <img id="layout" src="art/layout.png" alt="">
-  <canvas id="vfd" width="320" height="30"></canvas>
+  <div id="monitor">
+    <div id="screenbg"></div>
+    <canvas id="crt" width="640" height="250"></canvas>
+    <img src="art/cub.png" alt="">
+  </div>
+  <div id="machine">
+    <img src="art/machine.png" alt="">
+    <canvas id="vfd" width="320" height="30"></canvas>
+  </div>
 </div>
 <div id="hud">booting&hellip;</div>
 <div id="tapehint"></div>
@@ -148,15 +169,28 @@ new ResizeObserver(sizeCanvas).observe(crtEl);
 // No hand-tuned inset or bleed — both rectangles are measured.
 const reg = await fetch('art/regions.json').then(r => r.json());
 {
-  const place = (el, r) => {
-    el.style.left = r.left + '%';   el.style.top    = r.top + '%';
+  // A part is placed by left/top/width only: its height comes from its own
+  // image, so the box always matches the artwork whatever the width.
+  const put = (el, r) => {
+    el.style.left = r.left + '%'; el.style.top = r.top + '%';
+    el.style.width = r.width + '%';
+  };
+  // A region inside a part is a percentage of that part, so it needs nothing
+  // from the stage and survives the part being moved or resized.
+  const within = (el, r) => {
+    el.style.left = r.left + '%';  el.style.top    = r.top + '%';
     el.style.width = r.width + '%'; el.style.height = r.height + '%';
   };
-  place(document.getElementById('screenbg'), reg.pct.hole);
-  place(document.getElementById('crt'),      reg.pct.crt);
+
+  put(document.getElementById('monitor'), reg.cub.place);
+  put(document.getElementById('machine'), reg.machine.place);
+
+  within(document.getElementById('screenbg'), reg.cub.hole);
+  within(document.getElementById('crt'),      reg.cub.crt);
+
   const vf = document.getElementById('vfd');
-  place(vf, reg.pct.vfd);
-  vf.width = reg.vfd.w; vf.height = reg.vfd.h;
+  within(vf, reg.machine.vfd);
+  vf.width = reg.machine.vfdPx.w; vf.height = reg.machine.vfdPx.h;
 }
 
 const names = ['aben191.ic6','cdi3.ic7','ef iss 1.ic8','char eprom iss 1.ic453','cop420-guw.ic419'];

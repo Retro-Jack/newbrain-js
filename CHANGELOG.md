@@ -91,6 +91,14 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   for byte, GPL-3.0-or-later — which puts a CC BY-SA image and a GPL image in
   one composite, so the Commons file's alternative CeCILL v2 offer is the one
   taken, that being the GPL-compatible of the two.
+- The monitor and the machine are separate elements. They had been baked into
+  one `layout.png`, which fixed their arrangement into the pixels: the page
+  could not move the machine below the monitor on a narrow window, or size
+  either to suit. Each ships as its own image now, and each screen region is
+  given as a percentage **of its own part** rather than of the page, so a
+  screen travels with the part it belongs to. Below 900px the two stack and
+  take the width, and nothing about the screens needs restating to make that
+  work.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed

@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Compose the NewBrain layout: Microvitec CUB bezel + the machine, on
-transparency so the GenX-DOS wallpaper shows through.
+"""Prepare the NewBrain layout: a Microvitec CUB bezel and the machine, on
+transparency so whatever is behind the page shows through.
 
-Emits layout.png plus regions.json, so the page positions things from
-measured numbers rather than hand-tuned CSS."""
+The two are emitted as SEPARATE images rather than one composite, because a
+composite fixes their arrangement into the pixels: the page cannot then move
+the machine below the monitor on a narrow window, or size either to suit. So
+each part ships on its own, and regions.json carries two kinds of number --
+where each part sits on a nominal 1920x1080 stage, and where its screen sits
+WITHIN ITSELF. The second kind is what matters: a region given as a percentage
+of its own part travels with that part wherever the page puts it.""" 
 import json, os
 from PIL import Image
 
@@ -31,10 +36,8 @@ assert CUB_X + cub.width  <= W, "monitor overflows the canvas"
 assert NB_X  + NB_W       <= W, "machine overflows the canvas"
 assert NB_Y  + nb.height  <= H, "machine overflows the canvas" 
 
-canvas = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-canvas.alpha_composite(cub, (CUB_X, CUB_Y))
-canvas.alpha_composite(nb,  (NB_X, NB_Y))
-canvas.save(f"{HERE}/layout.png")
+cub.save(f"{HERE}/cub.png")
+nb.save(f"{HERE}/machine.png")
 
 # --- locate the regions in final canvas coordinates ----------------------
 # Per tools/bezel-test/README.md: compare a bezel's picture against the largest
@@ -99,17 +102,20 @@ for y in range(iT, iB + 1):
 _, rL, rT, rR, rB = best
 print(f"# inscribed {rL},{rT}..{rR},{rB}   (README records 85,73..753,637)")
 
-def to_canvas(L, T, R, B):
-    return {"x": round(CUB_X + L * cub_s), "y": round(CUB_Y + T * cub_s),
-            "w": round((R - L + 1) * cub_s), "h": round((B - T + 1) * cub_s)}
+def in_cub(L, T, R, B):
+    """A rectangle on the CUB source, as a percentage of the resized CUB."""
+    return {"left":   round(100 * (L * cub_s) / cub.width,  4),
+            "top":    round(100 * (T * cub_s) / cub.height, 4),
+            "width":  round(100 * ((R - L + 1) * cub_s) / cub.width,  4),
+            "height": round(100 * ((B - T + 1) * cub_s) / cub.height, 4)}
 
 # The backing fills the OUTER bound: if it stopped at the inner one, the
 # feather's part-transparent ink would composite with whatever is behind the
 # page instead of the backing, and show as a bright fringe the moment the
 # backing is not black. (feedback-magenta-bezel-check, the Apple finding.)
-hole = to_canvas(oL, oT, oR, oB)
-crt  = to_canvas(rL, rT, rR, rB)
-assert hole["y"] + hole["h"] <= CUB_Y + cub.height + 1, "hole escapes the bezel"
+hole = in_cub(oL, oT, oR, oB)
+crt  = in_cub(rL, rT, rR, rB)
+assert hole["top"] + hole["height"] <= 100.5, "hole escapes the bezel"
 
 # VFD: the tube's sixteen cells on the source photo, mapped through the same
 # scale and offset. Hunting for the dividers by threshold does fail - the photo
@@ -122,20 +128,29 @@ assert hole["y"] + hole["h"] <= CUB_Y + cub.height + 1, "hole escapes the bezel"
 # The earlier figures were half a cell out horizontally, which told as glyphs
 # sitting across the dividers rather than inside the cells.
 SRC_VFD = {"x": 552, "y": 101, "w": 336, "h": 30}
-vfd = {
-    "x": round(NB_X + SRC_VFD["x"] * nb_s),
-    "y": round(NB_Y + SRC_VFD["y"] * nb_s),
-    "w": round(SRC_VFD["w"] * nb_s),
-    "h": round(SRC_VFD["h"] * nb_s),
-}
+vfd = {"left":   round(100 * (SRC_VFD["x"] * nb_s) / nb.width,  4),
+       "top":    round(100 * (SRC_VFD["y"] * nb_s) / nb.height, 4),
+       "width":  round(100 * (SRC_VFD["w"] * nb_s) / nb.width,  4),
+       "height": round(100 * (SRC_VFD["h"] * nb_s) / nb.height, 4)}
+
+def place(x, y, w, h):
+    """Where a part sits on the nominal stage, as percentages of it."""
+    return {"left": round(100 * x / W, 4), "top": round(100 * y / H, 4),
+            "width": round(100 * w / W, 4), "height": round(100 * h / H, 4)}
 
 regions = {
-    "canvas": {"w": W, "h": H},
-    "crt": crt, "vfd": vfd, "hole": hole,
-    "pct": {
-        k: {"left": round(100 * v["x"] / W, 4), "top": round(100 * v["y"] / H, 4),
-            "width": round(100 * v["w"] / W, 4), "height": round(100 * v["h"] / H, 4)}
-        for k, v in (("crt", crt), ("vfd", vfd), ("hole", hole))
+    "stage": {"w": W, "h": H},
+    "cub": {
+        "src": "cub.png", "w": cub.width, "h": cub.height,
+        "place": place(CUB_X, CUB_Y, cub.width, cub.height),
+        "hole": hole, "crt": crt,
+    },
+    "machine": {
+        "src": "machine.png", "w": nb.width, "h": nb.height,
+        "place": place(NB_X, NB_Y, nb.width, nb.height),
+        "vfd": vfd,
+        # the VF canvas's backing store, in its own pixels
+        "vfdPx": {"w": round(SRC_VFD["w"] * nb_s), "h": round(SRC_VFD["h"] * nb_s)},
     },
 }
 json.dump(regions, open(f"{HERE}/regions.json", "w"), indent=2)
