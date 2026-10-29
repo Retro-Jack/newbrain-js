@@ -47,6 +47,9 @@ worked out by reading MAME's NewBrain driver and its COP400 CPU device.
 material; `src/` is a reimplementation in JavaScript. The reference sources
 are deliberately excluded from version control.
 
+Paths below are MAME's own, within its tree. A local copy for reading is kept
+in `reference/`, which `.gitignore` holds back.
+
 - `src/mame/grundy/newbrain.cpp`, `newbrain.h`, `newbrain_v.cpp`
 - `src/devices/bus/newbrain/*`
 - `src/devices/cpu/cop400/*`
@@ -78,7 +81,7 @@ The VF display's 16-segment glyphs.
   the decent thing.
 - Full text: [`art/fonts/Segment16-LICENCE.txt`](art/fonts/Segment16-LICENCE.txt)
 - Shipped subsetted to `U+0020-007E` plus `U+2588`, converted from the
-  original TTF.
+  original TTF, as `Segment16C-Regular.woff2` and `Segment16C-Regular.woff`.
 
 ### Bezel artwork — `art/`
 

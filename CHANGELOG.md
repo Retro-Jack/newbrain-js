@@ -50,6 +50,9 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   at build time, so they reach the deployed site without ever reaching git.
 - A missing ROM now says so on the page. Anyone who has just cloned this has
   no ROMs, and the page used to sit on "booting..." for ever instead.
+- README points at the published site, which it did not once there was one.
+- ATTRIBUTION names the two shipped font files, and says that the MAME paths
+  it lists are MAME's own with a local reading copy in `reference/`.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed

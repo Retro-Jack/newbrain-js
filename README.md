@@ -12,6 +12,13 @@ As far as I can establish, no browser-based NewBrain emulator existed before
 this one. The Internet Archive holds twenty-one NewBrain items and not one of
 them is emulatable.
 
+## Try it
+
+**<https://retro-jack.github.io/newbrain-js/>**
+
+The ROMs are not in this repository and the published site carries its own
+copy; see [ROMS.txt](ROMS.txt) if you are running it yourself.
+
 ## Running it
 
 Serve the directory over HTTP and open `index.html`. It needs no build step.
