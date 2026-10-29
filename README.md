@@ -22,6 +22,30 @@ Everything is plain ES modules.
 **You must supply the ROMs yourself** — see [ROMS.txt](ROMS.txt). They are not
 distributed here.
 
+## Loading a program from tape
+
+The deck is at the bottom right. Press **insert** and pick a tape file, then:
+
+1. Type `LOAD ""` on the machine and press Enter.
+2. Press **play**.
+
+That order matters, exactly as it does with a real recorder: the machine has to
+be listening before the tape starts. The lamp lights while the motor is
+running, and the bar shows how far through the tape has got. If a load fails,
+**rewind** plays it again from the start without reselecting the file.
+
+Loading is not a shortcut around the hardware. The file is turned into a
+signal and presented at the cassette input, and the machine's own COP420
+microcode demodulates it, so the ROM frames and checksums every block just as
+it would off tape. Errors it reports are the real ones: `ERROR 132` is a
+checksum failure, `ERROR 131` means the block will not fit the loader's
+buffer.
+
+Of the 115 tape images I tested, 100 load byte for byte. Most of the rest are
+machine code or assembler output rather than BASIC — `.COM`, `.BIN`, `.S`,
+`.O` — which BASIC's `LOAD` cannot accept whatever the tape does; the bytes
+arrive intact and the ROM declines them.
+
 ## State
 
 | | |
@@ -30,7 +54,9 @@ distributed here.
 | CRT, 40/80 column, green phosphor | working |
 | VF display, 16 characters | working |
 | Keyboard | working — COP420 scans the matrix |
-| Cassette and disc loading | not started |
+| Cassette loading | working — 100 of 115 tape images load byte for byte |
+| Cassette saving | the machine records correctly, but nothing captures it to a file yet |
+| Disc loading | not started — needs the FDC expansion |
 | Sound | the machine has none |
 
 It boots to `NEWBRAIN BASIC` / `READY` and you can type at it.

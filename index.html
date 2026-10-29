@@ -44,6 +44,34 @@
     position:fixed; left:8px; bottom:8px; z-index:9;
     font:11px ui-monospace,monospace; color:#7a7a85;
   }
+  /* Cassette deck. Deliberately plain: this is an emulation page, so the
+     controls stay out of the way of the machine. */
+  #deck {
+    position:fixed; right:8px; bottom:8px; z-index:9;
+    display:flex; align-items:center; gap:8px;
+    font:11px ui-monospace,monospace; color:#7a7a85;
+  }
+  #deck button, #deck label {
+    font:inherit; color:#c9c9d2; background:#26262c;
+    border:1px solid #3a3a44; border-radius:3px;
+    padding:3px 8px; cursor:pointer; white-space:nowrap;
+  }
+  #deck button:hover:not(:disabled), #deck label:hover {
+    background:#30303a; border-color:#4a4a57;
+  }
+  #deck button:disabled { opacity:.35; cursor:default; }
+  #tapename {
+    max-width:20ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    color:#9a9aa6;
+  }
+  #bar { width:64px; height:4px; background:#26262c; border-radius:2px; overflow:hidden; }
+  #bar i { display:block; height:100%; width:0; background:var(--vfd); transition:width .1s linear; }
+  /* Lit while the ROM has the motor running, so the tape visibly moves only
+     when the machine is actually reading it. */
+  #motor { width:6px; height:6px; border-radius:50%; background:#3a3a44; }
+  #motor.on { background:var(--vfd); box-shadow:0 0 5px var(--vfd); }
+  #tapehint { position:fixed; right:8px; bottom:30px; z-index:9;
+    font:11px ui-monospace,monospace; color:#6a6a74; text-align:right; }
 </style>
 </head>
 <body>
@@ -54,6 +82,16 @@
   <canvas id="vfd" width="320" height="30"></canvas>
 </div>
 <div id="hud">booting&hellip;</div>
+<div id="tapehint"></div>
+<div id="deck">
+  <span id="motor" title="cassette motor"></span>
+  <span id="bar"><i id="barfill"></i></span>
+  <span id="tapename">no tape</span>
+  <label>insert&hellip;<input id="tapefile" type="file" accept=".bas,.bin,.BAS,.BIN,.obj" hidden></label>
+  <button id="play" disabled>play</button>
+  <button id="rewind" disabled>rewind</button>
+  <button id="eject" disabled>eject</button>
+</div>
 
 <script type="module">
 import { NewBrainSystem, CPU_HZ } from './src/system.js';
@@ -227,6 +265,79 @@ addEventListener('keyup', e => {
 // A tab switch can leave keys stuck down.
 addEventListener('blur', () => sys.machine.clearKeys());
 
+// ---- cassette --------------------------------------------------------------
+// Nothing here touches the COP. The file is turned into a signal and played
+// into TPIN, and the machine's own microcode reads it, so the sequence is the
+// one a real deck needs: tell BASIC to listen, then press play.
+//
+// Playback is gated on the motor, which the ROM stops between blocks while it
+// stows one away. That is what lets long programs load, and it also means the
+// tape genuinely waits rather than running on past the machine.
+const deck = {
+  bytes: null,
+  name: '',
+  fileEl:  document.getElementById('tapefile'),
+  nameEl:  document.getElementById('tapename'),
+  playEl:  document.getElementById('play'),
+  rewEl:   document.getElementById('rewind'),
+  ejectEl: document.getElementById('eject'),
+  fillEl:  document.getElementById('barfill'),
+  motorEl: document.getElementById('motor'),
+  hintEl:  document.getElementById('tapehint'),
+};
+
+function deckHint(text) { deck.hintEl.textContent = text || ''; }
+
+function deckState() {
+  const loaded = !!deck.bytes;
+  const playing = !!sys.machine.tape;
+  deck.playEl.disabled  = !loaded || playing;
+  deck.rewEl.disabled   = !playing;
+  deck.ejectEl.disabled = !loaded;
+  deck.nameEl.textContent = loaded ? deck.name : 'no tape';
+}
+
+deck.fileEl.addEventListener('change', async () => {
+  const file = deck.fileEl.files[0];
+  if (!file) return;
+  deck.bytes = new Uint8Array(await file.arrayBuffer());
+  deck.name = file.name;
+  sys.machine.ejectTape();
+  deck.fillEl.style.width = '0%';
+  deckState();
+  deckHint('type  LOAD ""  then press play');
+  deck.fileEl.blur();
+});
+
+// Blur after every click, or Space and Enter would work the button instead of
+// reaching the machine's keyboard.
+function deckButton(el, fn) {
+  el.addEventListener('click', () => { fn(); deckState(); el.blur(); });
+}
+deckButton(deck.playEl,  () => { sys.machine.loadTape(deck.bytes); deckHint('playing'); });
+deckButton(deck.rewEl,   () => { sys.machine.loadTape(deck.bytes); deckHint('rewound; playing from the start'); });
+deckButton(deck.ejectEl, () => {
+  sys.machine.ejectTape();
+  deck.bytes = null; deck.name = ''; deck.fileEl.value = '';
+  deck.fillEl.style.width = '0%';
+  deckHint('');
+});
+deckState();
+
+function drawDeck() {
+  const tape = sys.machine.tape;
+  deck.motorEl.classList.toggle('on', sys.machine.motor && !!tape);
+  if (!tape) return;
+  deck.fillEl.style.width = (tape.progress * 100).toFixed(1) + '%';
+  if (tape.finished && !deck.doneShown) {
+    deck.doneShown = true;
+    deckHint('tape ended');
+    deckState();
+  } else if (!tape.finished) {
+    deck.doneShown = false;
+  }
+}
+
 let frames = 0, last = performance.now();
 function frame() {
   const now = performance.now();
@@ -235,6 +346,7 @@ function frame() {
   let ran = 0;
   while (acc >= FRAME_MS && ran < 4) { sys.runFrame(); acc -= FRAME_MS; ran++; }
   drawVfd();
+  drawDeck();
   sys.machine.renderInto(img.data);
   sctx.putImageData(img, 0, 0);
   crt.clearRect(0, 0, crtEl.width, crtEl.height);

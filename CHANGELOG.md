@@ -42,6 +42,10 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   dropout. The ROM stops the motor between blocks while it stows one away, so
   the tape stops with it — which is what makes long multi-block programs load
   rather than running on past the ROM while it is busy.
+- Cassette deck in the page: insert a tape file, play, rewind and eject, with a
+  lamp that lights while the ROM has the motor running and a bar showing how
+  far the tape has got. Buttons blur themselves after a click, or Space and
+  Enter would work the button instead of reaching the machine's keyboard.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed
