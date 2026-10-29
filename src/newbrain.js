@@ -444,8 +444,15 @@ export class NewBrain {
         for (let i = 0; i < 8; i++) {
           const bit = gr ? (grsr & 1) : ((vsr >> 7) & 1);
           const on = en && (bit ^ this.rv);
-          // The CUB is a green monitor; the bezel art expects P1 green.
-          const r = on ? 0x11 : 0, g = on ? 0xcf : 0, b = on ? 0x00 : 0;
+          // The machine has no colour hardware — one bit per pixel, lit or not,
+          // out through UHF or the monitor socket as plain luminance. Whatever
+          // colour it appeared in belonged to the display, not the NewBrain,
+          // and the bezel here is a Microvitec CUB: a colour monitor, which
+          // fed a monochrome signal drives all three guns together and shows
+          // white. Kept a little under full white so the glyphs read as
+          // phosphor rather than backlight.
+          const v = on ? 0xe8 : 0;
+          const r = v, g = v, b = v;
           rgba[p++] = r; rgba[p++] = g; rgba[p++] = b; rgba[p++] = 255;
           if (columns === 40) {
             rgba[p++] = r; rgba[p++] = g; rgba[p++] = b; rgba[p++] = 255;

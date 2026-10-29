@@ -58,7 +58,7 @@ arrive intact and the ROM declines them.
 | | |
 |---|---|
 | Z80, memory map, ROM paging | working |
-| CRT, 40/80 column, green phosphor | working |
+| CRT, 40/80 column | working |
 | VF display, 16 characters | working |
 | Keyboard | working — COP420 scans the matrix |
 | Cassette loading | working — 100 of 115 tape images load byte for byte |

@@ -10,7 +10,7 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Z80 memory map with ROM paging, including the power-up behaviour where every
   access decodes as bank 7 until PWRUP rises on its 5.6 second RC delay.
 - I/O port decode: CLCLK, COP microbus, ENRG1, TVL, TVTL and UST.
-- CRT renderer — 640x250, 40/80 column, green phosphor, scanline-major
+- CRT renderer — 640x250, 40/80 column, monochrome, scanline-major
   character ROM.
 - VF display: reads OUTBUFF and draws 16 cells in Segment16C, with unlit
   segments faint beneath and a tunable brightness gain.
@@ -58,6 +58,12 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   so timing was right, but a 180Hz panel redrew each 50Hz frame 3.6 times over
   for a picture that could not have changed. The frame counter now measures
   draws, so the figure in the corner reads about 50.
+- CRT draws white rather than green. The NewBrain has no colour hardware at
+  all — MAME models it as a monochrome palette and the machine sends plain
+  luminance out of its UHF and monitor sockets — so the colour was always the
+  display's, never the computer's. The bezel here is a Microvitec CUB, which
+  is a colour monitor, and a colour monitor fed a monochrome signal shows
+  white. The code had claimed the CUB was a green monitor, which it is not.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed
