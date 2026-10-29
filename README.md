@@ -53,7 +53,9 @@ it would off tape. Errors it reports are the real ones: `ERROR 132` is a
 checksum failure, `ERROR 131` means the block will not fit the loader's
 buffer.
 
-Of the 115 tape images I tested, 100 load byte for byte. Most of the rest are
+Of the 118 tape images tested, 103 load byte for byte. (A 119th,
+`scrn#1.bin`, is a damaged rip — one of its blocks carries a zeroed checksum —
+so it is reported as such rather than counted.) Most of the rest are
 machine code or assembler output rather than BASIC — `.COM`, `.BIN`, `.S`,
 `.O` — which BASIC's `LOAD` cannot accept whatever the tape does; the bytes
 arrive intact and the ROM declines them.
@@ -66,7 +68,7 @@ arrive intact and the ROM declines them.
 | CRT, 40/80 column | working |
 | VF display, 16 characters | working |
 | Keyboard | working — COP420 scans the matrix |
-| Cassette loading | working — 100 of 115 tape images load byte for byte |
+| Cassette loading | working — 103 of 118 tape images load byte for byte |
 | Cassette saving | working — `SAVE` then **save…** downloads a tape file |
 | Disc loading | not started — needs the FDC expansion |
 | Sound | the machine has none |

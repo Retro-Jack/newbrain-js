@@ -106,6 +106,13 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   columns and eats parts of strokes. The same trap cost glyphs on the CRT
   before. The panel is drawn rather than blitted, so it simply draws at the
   real resolution now and the pixelated hint is gone.
+- Tape sweep counts honestly. Files whose block chain did not consume them
+  exactly were dropped without a word, so four never appeared in any figure:
+  three merely have a final trailer cut short, which the loader has always
+  tolerated, and all three load. The fourth, `scrn#1.bin`, is a damaged rip
+  carrying a zeroed checksum, and is now reported as damaged rather than
+  quietly omitted. 103 of 118 load byte for byte, where the old filter said
+  100 of 115.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed
