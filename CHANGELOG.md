@@ -99,6 +99,13 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   screen travels with the part it belongs to. Below 900px the two stack and
   take the width, and nothing about the screens needs restating to make that
   work.
+- VF panel is drawn at the size it is actually shown, and redrawn when that
+  changes. Its backing store had been sized off the nominal 1920 stage, so on
+  a narrower window it was a 282px bitmap squeezed into a 220px box — a 0.78x
+  downscale, and `image-rendering: pixelated` on a downscale drops whole
+  columns and eats parts of strokes. The same trap cost glyphs on the CRT
+  before. The panel is drawn rather than blitted, so it simply draws at the
+  real resolution now and the pixelated hint is gone.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed

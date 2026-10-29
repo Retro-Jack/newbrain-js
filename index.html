@@ -43,7 +43,7 @@
 
   /* Within the machine: the VF text sits over the tube. */
   #machine img { position:relative; z-index:0; }
-  #vfd { position:absolute; z-index:1; image-rendering:pixelated; }
+  #vfd { position:absolute; z-index:1; }
 
   /* Too narrow to stand side by side: stack them and let each take the width.
      Nothing about the screens needs saying again — they are placed within
@@ -188,9 +188,7 @@ const reg = await fetch('art/regions.json').then(r => r.json());
   within(document.getElementById('screenbg'), reg.cub.hole);
   within(document.getElementById('crt'),      reg.cub.crt);
 
-  const vf = document.getElementById('vfd');
-  within(vf, reg.machine.vfd);
-  vf.width = reg.machine.vfdPx.w; vf.height = reg.machine.vfdPx.h;
+  within(document.getElementById('vfd'), reg.machine.vfd);
 }
 
 const names = ['aben191.ic6','cdi3.ic7','ef iss 1.ic8','char eprom iss 1.ic453','cop420-guw.ic419'];
@@ -238,6 +236,23 @@ let acc = 0, prev = performance.now();
 // shows them.
 const vfdEl  = document.getElementById('vfd');
 const vfdCtx = vfdEl.getContext('2d');
+
+// The panel is drawn, not blitted from a fixed bitmap, so it should be drawn
+// at the size it is actually shown — glyphs then come out crisp whatever the
+// window is doing. Sizing the backing store off the nominal 1920 stage left
+// it 282px wide inside a 220px box: a 0.78x downscale, which with
+// `image-rendering: pixelated` drops whole columns and eats parts of strokes.
+// Same trap as the CRT, where it cost parts of glyphs before.
+function sizeVfd() {
+  const r = vfdEl.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width * dpr));
+  const h = Math.max(1, Math.round(r.height * dpr));
+  if (vfdEl.width !== w || vfdEl.height !== h) {
+    vfdEl.width = w; vfdEl.height = h;
+    vfdPrev = null;          // resizing clears the canvas, so force a redraw
+  }
+}
 // Brightness is a single gain so it can be tuned in one place. Scaling the
 // channels alone would clamp green (already 255) and drag the hue toward cyan,
 // so the gain is split: part into the channels, the rest into a bloom, which
@@ -264,6 +279,12 @@ const VFD_GLOW  = (VFD_GAIN - 1) * 18;   // px of bloom, the rest of the gain
 let vfdPrev = null, vfdReady = false;
 
 document.fonts.load('16px Segment16C').then(() => { vfdReady = true; vfdPrev = null; });
+
+// Only once vfdPrev exists: sizeVfd clears it to force a redraw, and both it
+// and vfdEl are declared above this point.
+sizeVfd();
+addEventListener('resize', sizeVfd);
+new ResizeObserver(sizeVfd).observe(vfdEl);
 
 function drawVfd() {
   if (!vfdReady) return;

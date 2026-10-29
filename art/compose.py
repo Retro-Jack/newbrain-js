@@ -149,8 +149,6 @@ regions = {
         "src": "machine.png", "w": nb.width, "h": nb.height,
         "place": place(NB_X, NB_Y, nb.width, nb.height),
         "vfd": vfd,
-        # the VF canvas's backing store, in its own pixels
-        "vfdPx": {"w": round(SRC_VFD["w"] * nb_s), "h": round(SRC_VFD["h"] * nb_s)},
     },
 }
 json.dump(regions, open(f"{HERE}/regions.json", "w"), indent=2)
