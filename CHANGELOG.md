@@ -121,6 +121,11 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   slot does, so the hook costs nothing while it is unused. Fitting a real disc
   controller is known not to work and the source says so rather than leaving
   it to be rediscovered.
+- EXPANSION.md documents the disc hardware: the slot's arbitration, the
+  controller's two memory maps and four control registers, the disc geometry
+  and CP/M layout, what was built and verified, and the boot failure that
+  defeated it. The machine's tape format is published elsewhere; its disc
+  hardware is not, so this is written down rather than lost.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed
