@@ -13,6 +13,10 @@
 //   a 1 bit   two cycles of the high tone      four half cycles of ~832
 //   a 0 bit   one cycle of the low tone        ~1660 then ~1795
 //   a byte    start bit 1, eight data bits most significant first, stop bit 0
+//
+// A block's type byte reads: bit 7 first block, bit 6 last block, bits 0-5 the
+// sequence number — which matches the format published at newbrainemu.eu, as
+// does everything above that was measured here rather than read.
 //   a leader  repeating 2208 2208 1120 1120, a tone of its own
 //
 // All figures are Z80 T-states at 4MHz. The leader runs out one half cycle
