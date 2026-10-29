@@ -65,6 +65,69 @@ export function encodeTape(bytes, opts = {}) {
   return Int32Array.from(out);
 }
 
+// Reads back what the machine put on the tape line, which is the exact inverse
+// of encodeTape. The four half cycle lengths in play separate cleanly: the
+// data's are about 832 and 1660/1795, the leader tone's about 1120 and 2208,
+// so a window either side of 1000..1400 tells data from tone without having to
+// find the leader's end first.
+const isShort = g => g < 1000;                   // a data 1's quarter
+const isLong  = g => g >= 1400 && g < 2000;      // a data 0's half
+
+// Turns captured half cycle lengths back into the bytes that were written.
+export function decodeTape(gaps) {
+  const out = [];
+  let i = 0;
+
+  while (i < gaps.length) {
+    // Walk forward to the start of a frame: a 1 bit, which is the start bit.
+    if (!(isShort(gaps[i]) && isShort(gaps[i + 1]) &&
+          isShort(gaps[i + 2]) && isShort(gaps[i + 3]))) { i++; continue; }
+
+    const cells = [];
+    let j = i;
+    while (cells.length < 10) {
+      if (isShort(gaps[j]) && isShort(gaps[j + 1]) &&
+          isShort(gaps[j + 2]) && isShort(gaps[j + 3])) { cells.push(1); j += 4; }
+      else if (isLong(gaps[j]) && isLong(gaps[j + 1])) { cells.push(0); j += 2; }
+      else break;
+    }
+
+    // start bit 1, eight data bits most significant first, stop bit 0
+    if (cells.length === 10 && cells[0] === 1 && cells[9] === 0) {
+      let v = 0;
+      for (let k = 0; k < 8; k++) v = (v << 1) | cells[1 + k];
+      out.push(v);
+      i = j;
+    } else {
+      i++;
+    }
+  }
+  return Uint8Array.from(out);
+}
+
+// Captures the tape line while the machine is writing to it, as the lengths
+// between level changes. Nothing is decoded until the bytes are asked for, so
+// recording costs one number per half cycle and no more.
+export class TapeRecorder {
+  constructor() { this.gaps = []; this.clock = 0; this.last = -1; this.sinceEdge = 0; }
+
+  get empty() { return this.gaps.length === 0; }
+  clear() { this.gaps.length = 0; this.sinceEdge = 0; this.last = -1; }
+
+  // Called with the tape output level and the cycles elapsed since last time.
+  sample(level, delta) {
+    this.sinceEdge += delta;
+    if (this.last === -1) { this.last = level; this.sinceEdge = 0; return; }
+    if (level !== this.last) {
+      this.gaps.push(this.sinceEdge);
+      this.sinceEdge = 0;
+      this.last = level;
+    }
+  }
+
+  bytes() { return decodeTape(this.gaps); }
+}
+
 // Plays a list of half cycle lengths, flipping the tape level as each elapses.
 // It is driven by elapsed time rather than absolute cycles, because the tape
 // only moves while the motor is running: the ROM stops it between blocks while

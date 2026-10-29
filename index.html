@@ -101,6 +101,7 @@
   <button id="play" disabled>play</button>
   <button id="rewind" disabled>rewind</button>
   <button id="eject" disabled>eject</button>
+  <button id="save" disabled title="download what the machine has written to tape">save&hellip;</button>
 </div>
 
 <script type="module">
@@ -309,6 +310,7 @@ const deck = {
   playEl:  document.getElementById('play'),
   rewEl:   document.getElementById('rewind'),
   ejectEl: document.getElementById('eject'),
+  saveEl:  document.getElementById('save'),
   fillEl:  document.getElementById('barfill'),
   motorEl: document.getElementById('motor'),
   hintEl:  document.getElementById('tapehint'),
@@ -322,6 +324,7 @@ function deckState() {
   deck.playEl.disabled  = !loaded || playing;
   deck.rewEl.disabled   = !playing;
   deck.ejectEl.disabled = !loaded;
+  deck.saveEl.disabled = !sys.machine.hasRecording;
   deck.nameEl.textContent = loaded ? deck.name : 'no tape';
 }
 
@@ -352,9 +355,38 @@ deckButton(deck.ejectEl, () => {
 });
 deckState();
 
+// Hands back whatever the machine has written to tape. The bytes are read off
+// the tape line and demodulated, so the file is the same shape as one off a
+// real cassette — the COP's own 00 in front of each block included — and it
+// loads straight back in.
+deckButton(deck.saveEl, () => {
+  const bytes = sys.machine.recordedTape();
+  if (!bytes.length) { deckHint('nothing recorded'); return; }
+
+  // Name the file after the tape's own name block, if it has one.
+  let name = 'newbrain';
+  if (bytes[0] === 0 && bytes.length > 3) {
+    const count = bytes[1] | (bytes[2] << 8);
+    if (bytes[3 + count] === 0x81 && count > 0 && count < 32) {
+      const n = String.fromCharCode(...bytes.slice(3, 3 + count))
+        .replace(/[^A-Za-z0-9 ._-]/g, '').trim();
+      if (n) name = n;
+    }
+  }
+
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = name + '.bas';
+  a.click();
+  URL.revokeObjectURL(url);
+  deckHint(`saved ${name}.bas, ${bytes.length} bytes`);
+});
+
 function drawDeck() {
   const tape = sys.machine.tape;
-  deck.motorEl.classList.toggle('on', sys.machine.motor && !!tape);
+  // The lamp follows the motor whether the machine is reading or writing.
+  deck.motorEl.classList.toggle('on', sys.machine.motor);
+  if (deck.saveEl.disabled === sys.machine.hasRecording) deckState();
   if (!tape) return;
   deck.fillEl.style.width = (tape.progress * 100).toFixed(1) + '%';
   if (tape.finished && !deck.doneShown) {

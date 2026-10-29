@@ -67,6 +67,12 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   The white is warmed a little — a tube's white is never a perfect neutral,
   and a cold one sits badly against the brown surround — at the same
   luminance, so only the tint moves.
+- Cassette saving. What the machine writes is captured off the tape line and
+  demodulated, the exact inverse of loading, so nothing intercepts the COP in
+  either direction and the file carries the 00 the COP puts in front of each
+  block. `save...` on the deck downloads it, named after the tape's own name
+  block. Verified by saving a program and loading the result into a fresh
+  machine, which lists it back unchanged.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed

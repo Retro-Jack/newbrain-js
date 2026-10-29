@@ -10,7 +10,7 @@
 // touching the machine.
 
 import { COP420 } from './cop420.js';
-import { encodeTape, TapePlayer } from './tape.js';
+import { encodeTape, TapePlayer, TapeRecorder } from './tape.js';
 
 export const SCREEN_W = 640;
 export const SCREEN_H = 250;
@@ -88,6 +88,11 @@ export class NewBrain {
     this.copG = 0x0f;
     this.motor = false;
     this.motorOffAt = -1;
+
+    // Whatever the machine writes to tape is captured off the same line it
+    // would drive a recorder with, and demodulated on request. Nothing is
+    // intercepted: this listens to TDO exactly as a cassette would.
+    this.recorder = new TapeRecorder();
 
     this.tvl = 0;
     this.rv = 0;
@@ -235,7 +240,13 @@ export class NewBrain {
     if (this.tape && this.motor) this.tapeIn = this.tape.advance(z80Cycles);
     if (!this.cop) return;
     this.copDiv += z80Cycles;
-    while (this.copDiv >= 16) { this.copDiv -= 16; this.cop.step(); }
+    while (this.copDiv >= 16) {
+      this.copDiv -= 16;
+      this.cop.step();
+      // Only while the motor is turning, and only when no tape is playing —
+      // otherwise this would record the machine's own read-back.
+      if (this.motor && !this.tape) this.recorder.sample(this.copTdo, 16);
+    }
   }
 
   // ---- COP420 pins ---------------------------------------------------------
@@ -325,6 +336,11 @@ export class NewBrain {
   }
 
   ejectTape() { this.tape = null; this.tapeIn = 0; }
+
+  // What the machine has written to tape, as a tape file.
+  recordedTape() { return this.recorder.bytes(); }
+  clearRecording() { this.recorder.clear(); }
+  get hasRecording() { return !this.recorder.empty; }
 
   // How far through the tape the playback has run, 0 to 1.
   get tapeProgress() { return this.tape ? this.tape.progress : 0; }

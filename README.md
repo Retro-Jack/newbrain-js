@@ -41,6 +41,11 @@ be listening before the tape starts. The lamp lights while the motor is
 running, and the bar shows how far through the tape has got. If a load fails,
 **rewind** plays it again from the start without reselecting the file.
 
+To save, type `SAVE "NAME"` on the machine and wait for it to finish, then
+press **save…**. The file is demodulated off the tape line rather than
+intercepted, so what you get is the same shape as a tape off real hardware and
+loads straight back in.
+
 Loading is not a shortcut around the hardware. The file is turned into a
 signal and presented at the cassette input, and the machine's own COP420
 microcode demodulates it, so the ROM frames and checksums every block just as
@@ -62,7 +67,7 @@ arrive intact and the ROM declines them.
 | VF display, 16 characters | working |
 | Keyboard | working — COP420 scans the matrix |
 | Cassette loading | working — 100 of 115 tape images load byte for byte |
-| Cassette saving | the machine records correctly, but nothing captures it to a file yet |
+| Cassette saving | working — `SAVE` then **save…** downloads a tape file |
 | Disc loading | not started — needs the FDC expansion |
 | Sound | the machine has none |
 
