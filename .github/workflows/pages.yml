@@ -1,0 +1,59 @@
+# Publishes the emulator to GitHub Pages.
+#
+# The ROMs are not in this repository and never will be: they are Grundy's and
+# National Semiconductor's, not ours to redistribute. The published site needs
+# them to boot, so they are held in the NEWBRAIN_ROMS secret as a base64
+# tar.gz and unpacked here at build time. They reach the deployed site and
+# never reach git.
+#
+# Without the secret the build still publishes; the page then says plainly
+# that the ROMs are missing rather than hanging on "booting...".
+name: Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unpack the ROMs
+        env:
+          ROMS: ${{ secrets.NEWBRAIN_ROMS }}
+        run: |
+          if [ -z "$ROMS" ]; then
+            echo "::warning::NEWBRAIN_ROMS is not set — publishing without ROMs."
+            exit 0
+          fi
+          printf '%s' "$ROMS" | base64 -d | tar -xz -C roms/
+          echo "Unpacked $(find roms -type f ! -name .gitkeep | wc -l) ROM files."
+
+      - name: Trim what the site does not serve
+        run: rm -rf .github test reference
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

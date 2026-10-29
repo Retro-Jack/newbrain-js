@@ -46,6 +46,10 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   lamp that lights while the ROM has the motor running and a bar showing how
   far the tape has got. Buttons blur themselves after a click, or Space and
   Enter would work the button instead of reaching the machine's keyboard.
+- Published to GitHub Pages by a workflow that unpacks the ROMs from a secret
+  at build time, so they reach the deployed site without ever reaching git.
+- A missing ROM now says so on the page. Anyone who has just cloned this has
+  no ROMs, and the page used to sit on "booting..." for ever instead.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed
