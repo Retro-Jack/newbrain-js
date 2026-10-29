@@ -77,6 +77,7 @@ export class NewBrain {
     // as a steady level while playback is the tape's own signal.
     this.tapeIn = 0;
     this.copTdo = 0;
+    this.expansion = this.expansion || null;
 
     // Elapsed T-states, which the cassette is timed against.
     this.cycles = 0;
@@ -122,6 +123,11 @@ export class NewBrain {
       return off < this.ram.length ? this.ram[off] : 0xff;
     }
     switch (bank) {
+      // Bank 4 is the expansion slot, empty unless a card is fitted. The
+      // board owns 0-3 as RAM and 5-7 as ROM and answers over the top of a
+      // card for those, so bank 4 is the only one a card gets to itself —
+      // that is the whole of the arbitration.
+      case 4: return this.expansion ? this.expansion.hostRead(addr & 0x1fff) : 0xff;
       case 5: return this.rom[0x0000 + (addr & 0x1fff)];
       case 6: return this.rom[0x2000 + (addr & 0x1fff)];
       case 7: return this.rom[0x4000 + (addr & 0x1fff)];
@@ -135,8 +141,10 @@ export class NewBrain {
     if (bank < 4) {
       const off = (bank << 13) | (addr & 0x1fff);
       if (off < this.ram.length) this.ram[off] = val & 0xff;
+    } else if (bank === 4 && this.expansion) {
+      this.expansion.hostWrite(addr & 0x1fff, val & 0xff);
     }
-    // ROM writes and bank 4 go nowhere.
+    // ROM writes, and bank 4 with an empty slot, go nowhere.
   }
 
   // ---- I/O ----------------------------------------------------------------
@@ -157,6 +165,13 @@ export class NewBrain {
   }
 
   ioWrite(port, val) {
+    // A card's control register answers at port FF with address line 9 high.
+    // Z80 I/O carries the B register on the top half of the bus, so the full
+    // address matters here and this has to come before the usual masking.
+    if (this.expansion && (port & 0xff) === 0xff && ((port >> 9) & 1)) {
+      this.expansion.hostControl(val & 0xff);
+      return;
+    }
     port &= 0xff; val &= 0xff;
     switch ((port >> 2) & 0x07) {
       case 1:
@@ -325,6 +340,25 @@ export class NewBrain {
     else      this.keys[row] &= ~(1 << col);
   }
   clearKeys() { this.keys.fill(0); }
+
+  // ---- expansion -----------------------------------------------------------
+  // The slot the disc controller went in. Nothing ships in it: this emulates
+  // the machine as sold, and the disc system was bought separately.
+  //
+  // It is kept because the bus arrangement is the awkward part to work out
+  // again, and because a card is a self-contained thing to write against. A
+  // card needs three methods:
+  //
+  //   hostRead(addr)      bank 4, 0000-1FFF
+  //   hostWrite(addr, v)  the same
+  //   hostControl(v)      port FF with A9 high
+  //
+  // ▲ Fitting a disc controller is known NOT to work. The wiring here is
+  // right — a card answering 0xFF boots exactly as an empty slot does — but
+  // a card returning the real d413 ROM stops the machine booting on every
+  // BIOS revision, and why is unexplained. See the notes kept alongside the
+  // abandoned attempt before spending time on it.
+  fitExpansion(dev) { this.expansion = dev; }
 
   // ---- cassette ------------------------------------------------------------
   // Attaches a tape image. Nothing intercepts the COP: the image is turned

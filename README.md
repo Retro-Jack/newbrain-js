@@ -68,6 +68,12 @@ separately and fitted by a minority of owners, and it is deliberately not
 here — a stock machine is a cleaner thing to be than a particular owner's
 collection of add-ons.
 
+The expansion slot itself is wired up, because the bus arrangement is the
+awkward part and a card is a self-contained thing to write against. A card
+supplies `hostRead`, `hostWrite` and `hostControl`, and is fitted with
+`machine.fitExpansion(card)`. Nothing ships in it, and a disc controller is
+known not to work yet — `src/newbrain.js` says what is and is not understood.
+
 ## State
 
 | | |
@@ -78,7 +84,7 @@ collection of add-ons.
 | Keyboard | working — COP420 scans the matrix |
 | Cassette loading | working — 103 of 118 tape images load byte for byte |
 | Cassette saving | working — `SAVE` then **save…** downloads a tape file |
-| Disc loading | not emulated — see below |
+| Disc loading | not emulated — the slot is wired, nothing is fitted |
 | Sound | the machine has none |
 
 It boots to `NEWBRAIN BASIC` / `READY` and you can type at it.

@@ -116,6 +116,11 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - README says what is being emulated: a NewBrain AD as it shipped. The disc
   system was an expansion card rather than part of the machine, so its absence
   is a decision rather than a gap.
+- Expansion slot wired, and left empty. Bank 4 is the only part of the map a
+  card gets to itself, and a card answering 0xFF boots exactly as an empty
+  slot does, so the hook costs nothing while it is unused. Fitting a real disc
+  controller is known not to work and the source says so rather than leaving
+  it to be rediscovered.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed
