@@ -21,8 +21,8 @@
 
 const LEADER_GROUP = [2208, 2208, 1120, 1120];
 const JOIN         = 2208;
-const ONE          = [832, 832, 832, 832];
-const ZERO         = [1660, 1795];
+const ONE          = [832, 832, 832, 832];   // 3328
+const ZERO         = [1655, 1793];           // 3448
 
 // Leader before a block, and tone after it. The gap has to be long enough for
 // the ROM to stow one block and come back for the next.
@@ -35,10 +35,12 @@ export function tapeBlocks(bytes) {
   let p = 0;
   while (p + 3 <= raw.length && raw[p] === 0x00) {
     const count = raw[p + 1] | (raw[p + 2] << 8);
-    const end = p + 3 + count + 3 + 9;
-    if (end > raw.length) break;
-    out.push(raw.subarray(p, end));
-    p = end;
+    const body = p + 3 + count + 3;          // 00, count, data, type, checksum
+    if (body > raw.length) break;
+    // The nine byte trailer is laid down by the writer and never read back, so
+    // a file whose last one was cut short is still perfectly loadable.
+    out.push(raw.subarray(p, Math.min(body + 9, raw.length)));
+    p = body + 9;
   }
   return out;
 }

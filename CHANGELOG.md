@@ -32,7 +32,12 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   of the high tone, a 0 one cycle of the low tone, and each byte is framed
   start bit 1, eight data bits most significant first, stop bit 0. The leader
   runs out one half cycle into its group before the first frame, and without
-  that half cycle nothing decodes at all.
+  that half cycle nothing decodes at all. The two cells are not the same
+  length — a 1 runs 3328 T-states against a 0's 3448 — and forcing them equal
+  on the reasoning that a fixed-window demodulator would need it makes long
+  programs fail a checksum partway through. The figures are measured.
+- Tape files whose last block has a truncated trailer load anyway: those nine
+  bytes are laid down by the writer and never read back.
 - Cassette motor, driven from the COP's G1 and K6 through a relay with a 38ms
   dropout. The ROM stops the motor between blocks while it stows one away, so
   the tape stops with it — which is what makes long multi-block programs load
