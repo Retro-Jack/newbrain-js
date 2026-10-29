@@ -62,10 +62,15 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   on their second cycle, so instead of loading Q from the jump-table entry
   and returning, they jumped — corrupting the return stack. The COP now
   reaches far more of its microcode and drives the D port.
-- Display started 122 bytes into video RAM and used an 88-byte row stride;
-  previously the first 122 bytes were rendered as characters, which put a row
-  of blocks across the top of the screen and lost the first six characters of
-  the boot banner.
+- Display walks video RAM from the TVL latch with rows 64 bytes apart in
+  40-column mode and 128 in 80, as the hardware counts them. They had been
+  pinned to 122 and columns+8, fitted to the boot screen because the real
+  figures appeared to render it wrong; they did not, and the screen they were
+  fitted to was itself a symptom of the COP mis-executing its microcode at the
+  time. Tuned to one known screen they survived a boot banner and nothing
+  else: the second line landed in the wrong place and every line after walked
+  further across, which put READY at four different offsets once a few returns
+  had been pressed, and made a program listing unreadable.
 - Picture is fitted to the largest rectangle inscribed in the bezel's aperture
   rather than its bounding box, which was clipping the edge columns.
 - Emulation paced against the clock rather than `requestAnimationFrame`, which

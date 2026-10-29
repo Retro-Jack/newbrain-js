@@ -358,22 +358,18 @@ export class NewBrain {
   // RAM from the TVL latch; a 00 byte shifts a flag through qa/qb/qc, which
   // is how the hardware marks end-of-row, end-of-frame and graphics rows.
 
-  // ▲ VIDEO_START and the row stride are EMPIRICAL, not derived.
+  // Rows start at the TVL latch and sit 64 bytes apart in 40-column mode, 128
+  // in 80, exactly as the hardware counts them.
   //
-  // The hardware walks a flag-driven structure: a 00 byte shifts a marker
-  // through qa/qb/qc to end a row, a frame, or begin graphics. My port of that
-  // walk is not yet right, so the two constants below are pinned against
-  // known-good output instead (the boot screen reads "NEWBRAIN BASIC" then
-  // "READY"); a search over start 0..255 and nine plausible strides found
-  // exactly one combination that produces both, so they are well determined
-  // even though they are not yet explained.
-  //
-  // What they mean in practice: the first 122 bytes from TVL are a descriptor
-  // area (ff 00 repeated, then system data) rather than characters — rendering
-  // them is what put a row of blocks across the top of the screen — and rows
-  // sit 88 bytes apart in 80-column mode, not the 128 that MAME's model uses.
-  static VIDEO_START = 122;
-  static rowStride(columns) { return columns + 8; }
+  // These were pinned to 122 and columns+8 for a while, tuned against the boot
+  // screen because the real figures appeared to render it wrong. They did not:
+  // the COP was still mis-executing its microcode at the time, and the screen
+  // the constants were fitted to was itself a symptom. Fitted to one known
+  // screen they survive a boot banner and nothing else — a second line lands
+  // in the wrong place and every line after it walks further across, which is
+  // what put READY at four different offsets once a few returns were pressed.
+  static VIDEO_START = 0;
+  static rowStride(columns) { return columns === 80 ? 128 : 64; }
 
   renderInto(rgba) {
     if (!this.tvp) { rgba.fill(0); return; }
