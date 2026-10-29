@@ -128,7 +128,28 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   hardware is not, so this is written down rather than lost.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
+- `test/frameend.test.mjs`, which builds a screen by hand and pins the row
+  terminator and the frame end against each other: each of them was fixed
+  once by a change that broke the other, so neither is safe to check alone.
+
 ### Fixed
+- The display ran past the end of the frame. A program marks the end of its
+  screen with two 00 bytes, and nothing below that is meant to be drawn; the
+  renderer ignored the marker and painted the rows underneath from whatever
+  was next in RAM. Tycoon's title screen ends at row 29 and the two scanlines
+  below it were showing its BASIC source, which read as a thin strip along the
+  bottom of the picture. The frame end is now latched when a row's first run
+  of 00 bytes is exactly two, and everything below it is blank.
+- Rows whose terminator fell in column 38 rendered on alternate scanlines.
+  This appeared while fixing the frame end, by adopting MAME's handling of the
+  terminator flags: it carries them between scanlines and restores only qc,
+  from qb, which works when two or more bytes follow the 00 but leaves a stale
+  low qb behind when only one does. The next scanline then blanks from its
+  first column. Column 38 is where BASIC puts the terminator after a
+  38-character line — `PRINT "Time and score displayed at the bottom"` from
+  BreakOut's instructions — so the hardware cannot work that way. The
+  terminator is handled per scanline and the frame end latched separately,
+  which is a deliberate divergence from MAME; `renderInto` says why at length.
 - VF display read OUTBUFF left to right; the ROM fills it right to left, so
   the panel showed its text reversed.
 - COP420: sixteen opcodes were mis-decoded. `0x0c-0x0f`, `0x1c-0x1f`,

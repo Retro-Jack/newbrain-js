@@ -421,6 +421,24 @@ export class NewBrain {
   static VIDEO_START = 0;
   static rowStride(columns) { return columns === 80 ? 128 : 64; }
 
+  // Length of the first run of 00 bytes in a displayed row, 0 if it has none.
+  // One is a row terminator, two mark the end of the frame.
+  //
+  // ▲ Three or more mark a graphics line, which is NOT implemented: resetting
+  // the terminator flags per scanline means grLine can never come up, so the
+  // pixel-graphics path below is dead code. Nothing shipped reaches it — the
+  // four tapes are all text — but a program that uses pixel graphics will
+  // render as characters, and this is where to start.
+  zeroRun(rowAddr, columns) {
+    for (let c = 0; c < columns; c++) {
+      if (this.ram[(rowAddr + c) & 0x7fff] !== 0) continue;
+      let n = 0;
+      while (c + n < columns && this.ram[(rowAddr + c + n) & 0x7fff] === 0) n++;
+      return n;
+    }
+    return 0;
+  }
+
   renderInto(rgba) {
     if (!this.tvp) { rgba.fill(0); return; }
 
@@ -432,35 +450,44 @@ export class NewBrain {
     let rc = 0, vsr = 0, grsr = 0;
     let qa = true, qb = true, qc = true;
 
-    // The 461's flags restart at the top of every character row, and each of
-    // that row's scanlines is walked from the same state.
+    // The 461 shifts a flag in for each 00 byte fetched: one ends the row, two
+    // end the frame, three start a graphics line.
     //
-    // The hardware re-reads a line ten times over, so its 00 terminator has to
-    // act at the same column every time. Letting the flags run on from one
-    // scanline to the next meant a 00 in the final column left qa low, which
-    // collapsed qc two cells into the next scanline and blanked the rest of
-    // it: the row came out striped, rendering on alternate scanlines while the
-    // fixup repaired it in between. Latching them per row instead fixed that
-    // row and blanked the row after, because the same trailing 00 then carried
-    // over consistently. A line's terminator has no business reaching the next
-    // line at all, so the flags start clean for each.
+    // ▲ The flags are reset for every scanline here, which is NOT what MAME
+    // does, and the divergence is deliberate. MAME carries them from scanline
+    // to scanline and restores only qc, from qb, at the top of each one. That
+    // works whenever a row's 00 is followed by two or more fetched bytes —
+    // the state lands on (qa,qb,qc) = (1,1,0) and qc comes back up — but a 00
+    // in column 38 leaves exactly one byte behind it and the state ends
+    // (1,0,1). qc is already high so nothing is restored, the stale low qb
+    // shifts into qc on the next scanline's first column, and that scanline
+    // renders blank. The row comes out drawn on alternate scanlines.
     //
-    // ▲ This drops what the flags carry BETWEEN rows, which in MAME's model is
-    // what ends the frame on two 00 bytes and starts a graphics line on three.
-    // Within a row both still work. Nothing here exercises them — the area
-    // below the text blanks because the ROM fills it with spaces, not because
-    // the frame ended — so if a pixel-graphics program comes out wrong, this
-    // is the first place to look.
-    let rowQa = qa, rowQb = qb, rowQc = qc;
-
+    // Column 38 is where BASIC puts the terminator after a 38-character line,
+    // which is an ordinary thing to print: `PRINT "Time and score displayed at
+    // the bottom"` from BreakOut's instructions does it. A machine that
+    // striped that line would have been unusable, so the hardware cannot
+    // behave the way carrying the flags suggests. Checked against MAME 0.243
+    // directly, which draws the line solid — though only because that version
+    // has no terminator logic at all and simply paints all 240 lines.
+    //
+    // So the row terminator is handled per scanline, which is what makes a
+    // row's 00 blank the same columns on all ten of its scanlines, and the
+    // frame end is latched separately below rather than being carried in the
+    // flags.
     let p = 0;
+    let frameEnded = false, endsAfterThisRow = false;
+
     for (let y = 0; y < SCREEN_H; y++) {
       if (rc === 0) {
-        qa = qb = qc = true;
-        rowQa = qa; rowQb = qb; rowQc = qc;
-      } else {
-        qa = rowQa; qb = rowQb; qc = rowQc;
+        // The marker blanks the rows BELOW it; this row still blanks itself
+        // from its own 00 onwards, through the terminator above.
+        if (endsAfterThisRow) frameEnded = true;
+        endsAfterThisRow = !frameEnded && this.zeroRun(rowAddr, columns) === 2;
       }
+
+      qa = qb = qc = true;
+
       const grLine = !qa && !qc;
       if (!grLine) videoAddr = rowAddr;
 
@@ -473,7 +500,7 @@ export class NewBrain {
         if (qc) { qc = qb; qb = qa; qa = rd !== 0; }
 
         const gr = !qa && !qc;
-        const en = gr ? window : qc;
+        const en = !frameEnded && (gr ? window : qc);
 
         const rc3 = (rc >> 3) & 1;
         const txt = !(((rd >> 6) & 1) || ((rd >> 5) & 1));
