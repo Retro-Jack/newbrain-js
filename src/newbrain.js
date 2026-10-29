@@ -382,9 +382,35 @@ export class NewBrain {
     let rc = 0, vsr = 0, grsr = 0;
     let qa = true, qb = true, qc = true;
 
+    // The 461's flags restart at the top of every character row, and each of
+    // that row's scanlines is walked from the same state.
+    //
+    // The hardware re-reads a line ten times over, so its 00 terminator has to
+    // act at the same column every time. Letting the flags run on from one
+    // scanline to the next meant a 00 in the final column left qa low, which
+    // collapsed qc two cells into the next scanline and blanked the rest of
+    // it: the row came out striped, rendering on alternate scanlines while the
+    // fixup repaired it in between. Latching them per row instead fixed that
+    // row and blanked the row after, because the same trailing 00 then carried
+    // over consistently. A line's terminator has no business reaching the next
+    // line at all, so the flags start clean for each.
+    //
+    // ▲ This drops what the flags carry BETWEEN rows, which in MAME's model is
+    // what ends the frame on two 00 bytes and starts a graphics line on three.
+    // Within a row both still work. Nothing here exercises them — the area
+    // below the text blanks because the ROM fills it with spaces, not because
+    // the frame ended — so if a pixel-graphics program comes out wrong, this
+    // is the first place to look.
+    let rowQa = qa, rowQb = qb, rowQc = qc;
+
     let p = 0;
     for (let y = 0; y < SCREEN_H; y++) {
-      if (!qc) qc = qb;
+      if (rc === 0) {
+        qa = qb = qc = true;
+        rowQa = qa; rowQb = qb; rowQc = qc;
+      } else {
+        qa = rowQa; qb = rowQb; qc = rowQc;
+      }
       const grLine = !qa && !qc;
       if (!grLine) videoAddr = rowAddr;
 

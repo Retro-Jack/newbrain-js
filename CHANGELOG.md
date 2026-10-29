@@ -62,6 +62,15 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   on their second cycle, so instead of loading Q from the jump-table entry
   and returning, they jumped — corrupting the return stack. The COP now
   reaches far more of its microcode and drives the D port.
+- Row terminator no longer bleeds past its own line. A 00 in a line's last
+  column left the 461's flags low at the end of a scanline, which blanked the
+  next scanline two cells in, so the row rendered on alternate scanlines only
+  and came out striped — the rows where a printed number changed digit width
+  were the ones that landed that way. The flags now restart at the top of each
+  character row and every scanline of that row is walked from the same state.
+  ▲ This drops what the flags carried between rows, which in MAME's model ends
+  the frame on two 00 bytes and starts a graphics line on three; both still
+  work within a row, and neither is exercised by anything here yet.
 - Display walks video RAM from the TVL latch with rows 64 bytes apart in
   40-column mode and 128 in 80, as the hardware counts them. They had been
   pinned to 122 and columns+8, fitted to the boot screen because the real
