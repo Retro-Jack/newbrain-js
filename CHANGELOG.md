@@ -73,6 +73,10 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   block. `save...` on the deck downloads it, named after the tape's own name
   block. Verified by saving a program and loading the result into a fresh
   machine, which lists it back unchanged.
+- Machine artwork shows an English keyboard. The photograph it had been built
+  from is a French machine — AZERTY, with QSDFGHJKLM beneath — so the picture
+  was teaching a layout the emulator does not map. The VF tube is unchanged,
+  and the measured regions come out identical, so nothing else moved.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed
