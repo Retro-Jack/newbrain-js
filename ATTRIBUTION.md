@@ -107,11 +107,11 @@ Commons image it is not source-cleared; it is recorded here so that it is at
 least known, and the removal offer at the top of this file applies to it as
 much as to anything else.
 
-**The Microvitec CUB frame is jsbeeb's.** It is `dist/images/cub-monitor.png`
-from Matt Godbolt's BBC Micro emulator, byte for byte, as served by the BBC
-Computer Literacy Project at <https://clp.bbcrewind.co.uk/jsbeeb/>.
+**The Microvitec CUB frame is jsbeeb's.** It is
+`public/images/cub-monitor.png` from Matt Godbolt's BBC Micro emulator, byte
+for byte.
 
-- Source: https://github.com/mattgodbolt/jsbeeb
+- Source: https://github.com/mattgodbolt/jsbeeb/blob/main/public/images/cub-monitor.png
 - Licence: **GPL-3.0-or-later**
 
 ▲ **A note on combining the two.** CC BY-SA 2.0 and the GPL are not compatible
