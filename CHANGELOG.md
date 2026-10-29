@@ -53,6 +53,11 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - README points at the published site, which it did not once there was one.
 - ATTRIBUTION names the two shipped font files, and says that the MAME paths
   it lists are MAME's own with a local reading copy in `reference/`.
+- Draw only when the machine has moved on, rather than once per
+  `requestAnimationFrame`. The emulation was already paced against the clock,
+  so timing was right, but a 180Hz panel redrew each 50Hz frame 3.6 times over
+  for a picture that could not have changed. The frame counter now measures
+  draws, so the figure in the corner reads about 50.
 - Node test suite covering the memory map, boot, rendering and the COP.
 
 ### Fixed

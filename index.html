@@ -373,19 +373,25 @@ function frame() {
   prev = now;
   let ran = 0;
   while (acc >= FRAME_MS && ran < 4) { sys.runFrame(); acc -= FRAME_MS; ran++; }
-  drawVfd();
-  drawDeck();
-  sys.machine.renderInto(img.data);
-  sctx.putImageData(img, 0, 0);
-  crt.clearRect(0, 0, crtEl.width, crtEl.height);
-  crt.drawImage(src, 0, 0, SCREEN_W, SCREEN_H, 0, 0, crtEl.width, crtEl.height);
 
-  if (++frames % 25 === 0) {
-    const now = performance.now();
-    const t = performance.now(); const fps = 25000 / (t - last); last = t;
-    const m = sys.machine;
-    hud.textContent = `t=${sys.seconds.toFixed(1)}s  ${fps.toFixed(0)}fps  ` +
-      `pwrup=${m.pwrup} tvp=${m.tvp} ${m.c80l ? 80 : 40}col  PC=0x${sys.pc.toString(16).toUpperCase()}`;
+  // Only draw when the machine has actually moved on. requestAnimationFrame
+  // fires at the monitor's rate, which on a 180Hz panel is 3.6 redraws of a
+  // picture that cannot have changed; the machine produces 50 frames a second
+  // and there is nothing to show between them.
+  if (ran) {
+    drawVfd();
+    drawDeck();
+    sys.machine.renderInto(img.data);
+    sctx.putImageData(img, 0, 0);
+    crt.clearRect(0, 0, crtEl.width, crtEl.height);
+    crt.drawImage(src, 0, 0, SCREEN_W, SCREEN_H, 0, 0, crtEl.width, crtEl.height);
+
+    if (++frames % 25 === 0) {
+      const t = performance.now(); const fps = 25000 / (t - last); last = t;
+      const m = sys.machine;
+      hud.textContent = `t=${sys.seconds.toFixed(1)}s  ${fps.toFixed(0)}fps  ` +
+        `pwrup=${m.pwrup} tvp=${m.tvp} ${m.c80l ? 80 : 40}col  PC=0x${sys.pc.toString(16).toUpperCase()}`;
+    }
   }
   requestAnimationFrame(frame);
 }
