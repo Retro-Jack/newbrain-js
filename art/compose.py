@@ -37,7 +37,7 @@ assert NB_X  + NB_W       <= W, "machine overflows the canvas"
 assert NB_Y  + nb.height  <= H, "machine overflows the canvas" 
 
 cub.save(f"{HERE}/cub.png")
-nb.save(f"{HERE}/machine.png")
+nb.save(f"{HERE}/newbrain.png")
 
 # --- locate the regions in final canvas coordinates ----------------------
 # Per tools/bezel-test/README.md: compare a bezel's picture against the largest
@@ -146,7 +146,7 @@ regions = {
         "hole": hole, "crt": crt,
     },
     "machine": {
-        "src": "machine.png", "w": nb.width, "h": nb.height,
+        "src": "newbrain.png", "w": nb.width, "h": nb.height,
         "place": place(NB_X, NB_Y, nb.width, nb.height),
         "vfd": vfd,
     },

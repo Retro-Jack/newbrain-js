@@ -85,7 +85,7 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   through 888, and the lit band at rows 101..130.
 - ATTRIBUTION says what the machine artwork is made of. The body and VF tube
   are a Wikimedia Commons photograph by Rama & Musée Bolo, CC BY-SA 2.0 FR,
-  which `machine.png` inherits as a derivative; the replacement keyboard is from
+  which `newbrain.png` inherits as a derivative; the replacement keyboard is from
   the Home Computer Museum, which states no licence, and that is recorded as
   such rather than glossed. The CUB frame is jsbeeb's `public/images/cub-monitor.png`, byte
   for byte, GPL-3.0-or-later, and ships as `cub.png`. CC BY-SA and the GPL do
@@ -133,6 +133,8 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   once by a change that broke the other, so neither is safe to check alone.
 
 ### Changed
+- The machine artwork is `art/newbrain.png`, not `art/machine.png`. It sits
+  beside `art/cub.png` and the old name said nothing about which machine.
 - Pages workflow: `actions/checkout` v4 to v7, `actions/upload-pages-artifact`
   v3 to v5 and `actions/deploy-pages` v4 to v5, all of which now run on
   Node 24 — the old majors were being force-migrated off the deprecated

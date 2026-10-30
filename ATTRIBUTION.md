@@ -86,7 +86,7 @@ The VF display's 16-segment glyphs.
 ### Bezel artwork — `art/`
 
 Two images, built by [`art/compose.py`](art/compose.py): `cub.png`, the
-Microvitec CUB monitor, and `machine.png`, the NewBrain itself. They are
+Microvitec CUB monitor, and `newbrain.png`, the NewBrain itself. They are
 separate files under separate licences; the page places them side by side
 rather than combining them into one picture.
 
@@ -96,7 +96,7 @@ on Wikimedia Commons, by **Rama & Musée Bolo**, of a machine on display at the
 Musée Bolo, EPFL, Lausanne.
 
 - Licence: **CC BY-SA 2.0 FR**, or CeCILL v2 at the user's choice
-- Share-alike: `art/machine.png` is a derivative and inherits it. That is a
+- Share-alike: `art/newbrain.png` is a derivative and inherits it. That is a
   condition on that one image, not on the emulator — `src/` stays GPL-3.0,
   and `art/cub.png` is untouched by it.
 
