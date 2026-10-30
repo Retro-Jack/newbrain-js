@@ -85,14 +85,14 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   through 888, and the lit band at rows 101..130.
 - ATTRIBUTION says what the machine artwork is made of. The body and VF tube
   are a Wikimedia Commons photograph by Rama & Musée Bolo, CC BY-SA 2.0 FR,
-  which `layout.png` inherits as a derivative; the replacement keyboard is from
+  which `machine.png` inherits as a derivative; the replacement keyboard is from
   the Home Computer Museum, which states no licence, and that is recorded as
   such rather than glossed. The CUB frame is jsbeeb's `public/images/cub-monitor.png`, byte
-  for byte, GPL-3.0-or-later — which puts a CC BY-SA image and a GPL image in
-  one composite, so the Commons file's alternative CeCILL v2 offer is the one
-  taken, that being the GPL-compatible of the two.
+  for byte, GPL-3.0-or-later, and ships as `cub.png`. CC BY-SA and the GPL do
+  not mix, so the two are kept as separate files and never composited: each
+  stays wholly under its own licence and no combined work is made.
 - The monitor and the machine are separate elements. They had been baked into
-  one `layout.png`, which fixed their arrangement into the pixels: the page
+  one composite image, which fixed their arrangement into the pixels: the page
   could not move the machine below the monitor on a narrow window, or size
   either to suit. Each ships as its own image now, and each screen region is
   given as a percentage **of its own part** rather than of the page, so a

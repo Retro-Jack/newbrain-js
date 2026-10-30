@@ -85,8 +85,10 @@ The VF display's 16-segment glyphs.
 
 ### Bezel artwork — `art/`
 
-`layout.png` is composited by [`art/compose.py`](art/compose.py) from a
-Microvitec CUB monitor frame and a picture of the machine.
+Two images, built by [`art/compose.py`](art/compose.py): `cub.png`, the
+Microvitec CUB monitor, and `machine.png`, the NewBrain itself. They are
+separate files under separate licences; the page places them side by side
+rather than combining them into one picture.
 
 **The machine carries a binding obligation.** Its body and VF tube are from
 [File:New Brain IMG 4244.jpg](https://commons.wikimedia.org/wiki/File:New_Brain_IMG_4244.jpg)
@@ -94,8 +96,9 @@ on Wikimedia Commons, by **Rama & Musée Bolo**, of a machine on display at the
 Musée Bolo, EPFL, Lausanne.
 
 - Licence: **CC BY-SA 2.0 FR**, or CeCILL v2 at the user's choice
-- Share-alike: `art/layout.png` is a derivative and inherits it. That is a
-  condition on the artwork, not on the emulator — `src/` stays GPL-3.0.
+- Share-alike: `art/machine.png` is a derivative and inherits it. That is a
+  condition on that one image, not on the emulator — `src/` stays GPL-3.0,
+  and `art/cub.png` is untouched by it.
 
 That photograph is of a **French** NewBrain, and its keyboard is AZERTY. Since
 a picture of the machine is the one place a reader looks to find where a key
@@ -107,21 +110,24 @@ Commons image it is not source-cleared; it is recorded here so that it is at
 least known, and the removal offer at the top of this file applies to it as
 much as to anything else.
 
-**The Microvitec CUB frame is jsbeeb's.** It is
+**`cub.png` is jsbeeb's.** It is
 `public/images/cub-monitor.png` from Matt Godbolt's BBC Micro emulator, byte
 for byte.
 
 - Source: https://github.com/mattgodbolt/jsbeeb/blob/main/public/images/cub-monitor.png
 - Licence: **GPL-3.0-or-later**
 
-▲ **A note on combining the two.** CC BY-SA 2.0 and the GPL are not compatible
-licences, and `layout.png` is one image made from both. The Commons file is
-offered under *either* CC BY-SA 2.0 FR *or* **CeCILL v2**, at the user's
-choice, and CeCILL v2 is written to be GPL-compatible — so **CeCILL v2 is the
-option taken here**, which puts the whole composite on GPL-compatible terms
-alongside the emulator. Attribution to Rama & Musée Bolo is given either way.
-This is a reading, not legal advice; it is written down so the reasoning can
-be checked rather than assumed.
+▲ **A note on keeping the two apart.** CC BY-SA 2.0 and the GPL are not
+compatible licences, and the monitor and the machine are under one each. They
+are kept as separate files for that reason as well as for layout: each is
+wholly under its own licence, and the page only displays them alongside one
+another. Nothing combines them into a single image, so no combined work is
+made and the incompatibility does not arise. Were one ever wanted, the
+Commons file is offered under *either* CC BY-SA 2.0 FR *or* **CeCILL v2** at
+the user's choice, and CeCILL v2 is written to be GPL-compatible, so that is
+the option that would be taken. Attribution to Rama & Musée Bolo is given
+either way. This is a reading, not legal advice; it is written down so the
+reasoning can be checked rather than assumed.
 
 ---
 
