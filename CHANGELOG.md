@@ -153,6 +153,28 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Node 20 on every build. The runner is pinned to `ubuntu-26.04` instead of
   `ubuntu-latest`, which began migrating to Ubuntu 26 on 19/10/2026.
 
+### Added
+- **Pixel graphics.** Three `00` bytes hand the rest of the frame to a bitmap:
+  the flags stop being reset, `videoAddr` runs on linearly instead of returning
+  to the row, the character row counter stops, and each byte is eight pixels
+  out of `grsr`, least significant bit first. The code for all of that was
+  already here, ported from MAME and unreachable — the per-scanline flag reset
+  that fixes the column-38 striping also meant `grLine` could never come up.
+
+  The two needs pull in opposite directions, so the reset now applies to text
+  rows only. A row whose zero run reaches three latches the region: that one
+  scanline starts clean, its own `00`s bring `qc` down part way across, and
+  every scanline after it carries the flags exactly as MAME has them.
+
+  Found by Chess, which draws its board this way and came out as blocks and
+  stripes. Confirmed against the machine's own state before anything was
+  changed — the title frame's row 5 is a run of 40 zero bytes, and with
+  `c32_40` set the bitmap behind it reads cleanly at 32 bytes per scanline.
+  `test/graphics.test.mjs` pins the switch, that it runs to the bottom of the
+  frame rather than for one row, the dark marker on the transition scanline,
+  and the bytes-per-scanline stride — the one that shears the picture if it is
+  wrong. Each was checked to fail against the renderer as it stood.
+
 ### Fixed
 - **A tape could only hold one program, so multi-part titles could not load.**
   Chess is a BASIC loader that asks for a 16K binary once it is running, and
