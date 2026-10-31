@@ -144,6 +144,13 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   repository depends on the other; this one is authoritative and the two
   are kept in step.
 
+### Added
+- **The deck says when a file is not a tape.** A file with no block chain in
+  it contributes nothing to the signal, so it would sit in the list looking
+  loaded and simply not be there. Adv's `ADV.BIN` is one — a raw 28K memory
+  image rather than a recording, `01 00 0f` where every real tape starts
+  `00` and a byte count. The deck now names it instead of letting it pass.
+
 ### Fixed
 - **"PLAYING" never went away.** The status sat on it for good once a tape had
   been read, because it waited on the signal running out and the signal never

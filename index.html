@@ -219,6 +219,7 @@
 
 <script type="module">
 import { NewBrainSystem, CPU_HZ } from './src/system.js';
+import { tapeBlocks } from './src/tape.js';
 import { SCREEN_W, SCREEN_H } from './src/newbrain.js';
 
 const hud = document.getElementById('hud');
@@ -522,9 +523,18 @@ deck.fileEl.addEventListener('change', async () => {
   sys.machine.ejectTape();
   deckProgress(0);
   deckState();
-  deckHint(first
-    ? 'type  LOAD ""  then press play'
-    : `${deck.parts.length} programs on the tape, in that order`);
+  // A file that is not in tape format contributes no blocks, and encodeTape
+  // simply has nothing to lay down for it — so it would go on the tape
+  // silently and not be there. Adv's ADV.BIN is one: a raw 28K memory image,
+  // not a recording. Say so rather than let it look loaded.
+  const notTapes = deck.parts.filter(p => !tapeBlocks(p.bytes).length);
+  if (notTapes.length) {
+    deckHint(`${notTapes[0].name} is not a tape file`);
+  } else {
+    deckHint(first
+      ? 'type  LOAD ""  then press play'
+      : `${deck.parts.length} programs on the tape, in that order`);
+  }
   deck.fileEl.value = '';          // so the same file can be added again
   deck.fileEl.blur();
 });
