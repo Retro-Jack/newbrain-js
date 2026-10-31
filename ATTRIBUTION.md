@@ -5,6 +5,11 @@ the canonical record of what was used and under what terms. It is maintained
 alongside [CHANGELOG.md](CHANGELOG.md): anything added or replaced gets an
 entry here.
 
+[PROVENANCE.md](PROVENANCE.md) is its companion: this file records *what* was
+used and under what terms, that one records *how* the emulator was written —
+what the code derives from, what it deliberately does not, and which of those
+claims can be checked.
+
 ---
 
 ## Removal upon request
@@ -59,6 +64,10 @@ in `reference/`, which `.gitignore` holds back.
 BSD-3-Clause requires the copyright notice be retained in redistributions, and
 this is it. Curt Coder did the hard archaeology on this machine; without that
 driver none of this would have been feasible.
+
+How that reading was done, and the line held against the one closed-source
+NewBrain emulator that predates this work, is set out in
+[PROVENANCE.md](PROVENANCE.md).
 
 ### Documentation
 

@@ -132,6 +132,18 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   terminator and the frame end against each other: each of them was fixed
   once by a change that broke the other, so neither is safe to check alone.
 
+- PROVENANCE.md, a clean-room statement. ATTRIBUTION records what was used and
+  under what terms; this records how the emulator was written — that it derives
+  from MAME's BSD-3-Clause driver and Grundy's own Technical Manual, that
+  nothing comes from the one closed-source NewBrain emulator that predates it,
+  and what anyone can check for themselves rather than take on trust. The
+  separation from MAME is not claimed and is not needed: BSD-3 permits the
+  reuse. The separation from closed source is real, so it is described instead
+  of asserted. Linked from ATTRIBUTION in both directions. The GenX-DOS
+  bundle carries its own copy beside its copy of `src/`, so neither
+  repository depends on the other; this one is authoritative and the two
+  are kept in step.
+
 ### Changed
 - The machine artwork is `art/newbrain.png`, not `art/machine.png`. It sits
   beside `art/cub.png` and the old name said nothing about which machine.
