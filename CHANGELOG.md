@@ -154,6 +154,24 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `ubuntu-latest`, which began migrating to Ubuntu 26 on 19/10/2026.
 
 ### Fixed
+- **The cassette controls were hard to read, and the page could clip them.**
+  Two faults with one symptom. Disabled buttons used `opacity:.35`, which
+  fades an element's text *and* its background together — 2.3:1 against each
+  other, a shape rather than a word, and with no tape in that is four of the
+  five controls. They now carry explicit colours at 4.8:1, still clearly
+  secondary to the 9.8:1 of an enabled one; the hint line went from 3.3:1 to
+  7.2:1 and the row from 11px to 12px.
+
+  The deck, the status line and the hint were also `position:fixed` in the
+  viewport's corners, while the stage is a 16:9 box as wide as the page. On
+  any window shallower than `width / 1.778` the artwork overflowed and the
+  controls floated over the bottom of it — at 1344x729 the machine's bottom
+  row of keys was cut off entirely. They sit in the flow below the stage now,
+  aligned to its own edges, and the stage is capped to
+  `min(1920px, calc((100vh - 92px) * 1920 / 1080))` so a short or wide window
+  shrinks the picture instead. Below 900px the stacked layout resets the cap
+  and scrolls as before, with the controls last in flow.
+
 - The display ran past the end of the frame. A program marks the end of its
   screen with two 00 bytes, and nothing below that is meant to be drawn; the
   renderer ignored the marker and painted the rows underneath from whatever
