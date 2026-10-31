@@ -145,6 +145,24 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   are kept in step.
 
 ### Changed
+- **The cassette deck is one panel now, in the GenX-DOS design language.** It
+  was a row of loose controls in a corner; it reads as a deck: what is in the
+  machine on the top line, how far through it is in the middle, the transport
+  along the bottom, inside a bordered panel. The page takes the landing
+  page's tokens — `--crt`, `--panel`, `--amber`, `--green`, `--cyan`,
+  `--paper`, `--dim`, `--line` — so the chrome round the machine belongs to
+  the same product as the rest of the site. `--vfd` stays separate: that is
+  the colour of the real tube, not a UI choice.
+
+- **The progress bar is a row of slanted slabs** that light one at a time,
+  after the loading bars those machines' own software used. They are real
+  elements rather than a tiled gradient, because a gradient tile clips its own
+  slant at each end and sliced the first and last slab; skewing a box leaves
+  the whole parallelogram visible. The fill is floored to whole slabs, so no
+  slab is ever part lit, and the count lives in `--slabs` alone — the script
+  reads it from the stylesheet.
+
+### Changed
 - The machine artwork is `art/newbrain.png`, not `art/machine.png`. It sits
   beside `art/cub.png` and the old name said nothing about which machine.
 - Pages workflow: `actions/checkout` v4 to v7, `actions/upload-pages-artifact`

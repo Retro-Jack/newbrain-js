@@ -16,8 +16,18 @@
         url('art/fonts/Segment16C-Regular.woff')  format('woff');
     font-display:block;
   }
-  :root { --vfd:#ffb347; }
-  html,body { margin:0; height:100%; background:#1a1a1e; }
+  /* The GenX-DOS design language, from the landing page: the chrome round the
+     machine is part of that product, so it uses those tokens rather than a
+     palette of its own. --vfd stays separate — it is the colour of the real
+     vacuum-fluorescent tube, not a UI choice. */
+  :root {
+    --vfd:#ffb347;
+    --crt:#0B0D10; --panel:#14171C; --amber:#FFB000; --green:#35FF6D;
+    --cyan:#4BC4D6; --paper:#D4D1C6; --dim:#837D6E;
+    --line:rgba(255,176,0,.22);
+    --ctl:118px;
+  }
+  html,body { margin:0; height:100%; background:var(--crt); }
   /* The stage keeps the 1920x1080 artwork's proportions, so every region can
      be positioned in percentages taken straight off the measured artwork. */
   /* --ctl is the height the controls row needs below the artwork. The stage is
@@ -26,13 +36,13 @@
      cap, a 16:9 stage on a shallow window is taller than the viewport and the
      page scrolls, which is how the deck used to end up sitting on the
      machine. */
-  :root { --ctl:92px; }
+  
   #stage {
     position:relative; width:100%;
     max-width:min(1920px, calc((100vh - var(--ctl)) * 1920 / 1080));
     margin:0 auto;
     aspect-ratio:1920/1080;
-    background:#1a1a1e;
+    background:var(--crt);
   }
   /* The monitor and the machine are two independent parts, each absolutely
      placed on the stage and each carrying its own screen. A part's container
@@ -74,49 +84,75 @@
     width:100%; max-width:1920px; margin:0 auto;
     box-sizing:border-box; padding:10px 16px 16px;
     display:flex; align-items:flex-start; gap:16px;
-    font:12px ui-monospace,monospace; color:#8a8a95;
+    font:12px ui-monospace,monospace; color:var(--dim);
   }
   #meta { display:flex; flex-direction:column; gap:6px; min-width:0; }
   #hud { padding-top:4px; }
-  #repo { color:#a6a6b2; text-decoration:none; border-bottom:1px solid #4a4a57; }
-  #repo:hover { color:#d7d7de; border-bottom-color:#8a8a95; }
-  /* Cassette deck. Deliberately plain: this is an emulation page, so the
-     controls stay out of the way of the machine. */
-  #deckwrap {
-    margin-left:auto; display:flex; flex-direction:column;
-    align-items:flex-end; gap:6px; min-width:0;
-  }
+  #repo { color:var(--cyan); text-decoration:none; border-bottom:1px solid var(--line); }
+  #repo:hover { color:#8fe3ef; border-bottom-color:currentColor; }
+
+  /* The cassette deck reads as one panel rather than a row of loose controls:
+     what is in the machine on top, how far through it is in the middle, and
+     the transport along the bottom. */
+  #deckwrap { margin-left:auto; min-width:0; }
   #deck {
-    display:flex; align-items:center; justify-content:flex-end;
-    gap:8px; flex-wrap:wrap;
+    display:flex; flex-direction:column; gap:7px;
+    background:var(--panel); border:1px solid var(--line); border-radius:6px;
+    padding:9px 11px;
   }
+  .deckrow { display:flex; align-items:center; gap:9px; }
+  #tapename {
+    max-width:34ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    color:var(--paper);
+  }
+  /* min-height reserves the line whether or not there is a hint, so the panel
+     does not change height every time the deck has something to say. */
+  #tapehint { margin-left:auto; color:var(--green); white-space:nowrap;
+              text-transform:uppercase; letter-spacing:.09em; font-size:11px;
+              min-height:1.35em; }
+  .transport { gap:7px; flex-wrap:wrap; }
   #deck button, #deck label {
-    font:inherit; color:#d7d7de; background:#2b2b33;
-    border:1px solid #4a4a57; border-radius:3px;
+    font:inherit; color:var(--paper); background:var(--crt);
+    border:1px solid var(--line); border-radius:3px;
     padding:4px 10px; cursor:pointer; white-space:nowrap;
   }
   #deck button:hover:not(:disabled), #deck label:hover {
-    background:#3a3a46; border-color:#5e5e6d;
+    color:var(--amber); border-color:var(--amber);
   }
   /* Explicit colours rather than opacity:.35. Opacity applies to the whole
      element, so a disabled button's text AND its background both faded into
      the page, landing at 2.3:1 against each other — and most of the deck is
      disabled most of the time: play until a tape is in, rewind until it is
-     running, save until something has been recorded. These values are 4.8:1,
-     still plainly secondary to the 9.8:1 of an enabled one. */
+     running, save until something has been recorded. */
   #deck button:disabled {
-    color:#8e8e9a; background:#232329; border-color:#3a3a44; cursor:default;
+    color:var(--dim); border-color:rgba(255,176,0,.10); cursor:default;
   }
-  #tapename {
-    max-width:20ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    color:#9a9aa6;
+  #save { margin-left:auto; }
+
+  /* The progress bar is a row of slanted slabs that fill left to right. Both
+     layers carry the same gradient at the same background-size, so the tiles
+     are anchored to the left edge of each and the lit slabs land exactly on
+     the unlit ones however wide the fill is. */
+  /* The progress bar is a row of slanted slabs. They are real elements rather
+     than a tiled gradient: a gradient tile clips its own slant at both ends of
+     the tile, which sliced the first and last slab. Skewing a box leaves the
+     whole parallelogram visible, so every slab is complete, and lighting them
+     is then a matter of a class rather than a width. */
+  #bar {
+    --slabs:24;
+    display:flex; gap:3px; height:15px; padding:0 3px;
   }
-  #bar { width:64px; height:4px; background:#26262c; border-radius:2px; overflow:hidden; }
-  #bar i { display:block; height:100%; width:0; background:var(--vfd); transition:width .1s linear; }
+  #bar i {
+    flex:1 1 0; height:100%; transform:skewX(-13deg);
+    background:rgba(131,125,110,.38);
+  }
+  #bar i.on { background:var(--amber); }
   /* Lit while the ROM has the motor running, so the tape visibly moves only
      when the machine is actually reading it. */
-  #motor { width:6px; height:6px; border-radius:50%; background:#3a3a44; }
-  #motor.on { background:var(--vfd); box-shadow:0 0 5px var(--vfd); }
+  #motor { width:7px; height:7px; border-radius:50%; flex:none;
+           background:#2a2a2e; border:1px solid var(--line); }
+  #motor.on { background:var(--amber); border-color:var(--amber);
+              box-shadow:0 0 6px var(--amber); }
   #romerr {
     position:fixed; inset:0; margin:auto; z-index:20;
     width:min(30rem,calc(100% - 32px)); height:max-content;
@@ -127,9 +163,6 @@
   #romerr b { color:var(--vfd); font-size:15px; }
   #romerr p { margin:10px 0; color:#9a9aa6; }
   #romerr code { display:block; margin-top:12px; color:#7a7a85; font-size:11px; }
-  /* min-height reserves the line whether or not there is a hint, so the page
-     does not jump by a row every time the deck has something to say. */
-  #tapehint { min-height:1.35em; color:#a6a6b2; text-align:right; }
 </style>
 </head>
 <body>
@@ -151,16 +184,20 @@
   </div>
   <div id="deckwrap">
     <div id="deck">
-      <span id="motor" title="cassette motor"></span>
-      <span id="bar"><i id="barfill"></i></span>
-      <span id="tapename">no tape</span>
-      <label id="insert">insert&hellip;<input id="tapefile" type="file" accept=".bas,.bin,.BAS,.BIN,.obj" multiple hidden></label>
-      <button id="play" disabled>play</button>
-      <button id="rewind" disabled>rewind</button>
-      <button id="eject" disabled>eject</button>
-      <button id="save" disabled title="download what the machine has written to tape">save&hellip;</button>
+      <div class="deckrow">
+        <span id="motor" title="cassette motor"></span>
+        <span id="tapename">no tape</span>
+        <span id="tapehint"></span>
+      </div>
+      <span id="bar"></span>
+      <div class="deckrow transport">
+        <label id="insert">insert&hellip;<input id="tapefile" type="file" accept=".bas,.bin,.BAS,.BIN,.obj" multiple hidden></label>
+        <button id="play" disabled>play</button>
+        <button id="rewind" disabled>rewind</button>
+        <button id="eject" disabled>eject</button>
+        <button id="save" disabled title="download what the machine has written to tape">save&hellip;</button>
+      </div>
     </div>
-    <div id="tapehint"></div>
   </div>
 </div>
 
@@ -414,12 +451,24 @@ const deck = {
   rewEl:   document.getElementById('rewind'),
   ejectEl: document.getElementById('eject'),
   saveEl:  document.getElementById('save'),
-  fillEl:  document.getElementById('barfill'),
+  barEl:   document.getElementById('bar'),
   motorEl: document.getElementById('motor'),
   hintEl:  document.getElementById('tapehint'),
 };
 
 function deckHint(text) { deck.hintEl.textContent = text || ''; }
+
+// The bar fills a slab at a time: a fraction is floored to whole slabs, and 1
+// lights every one. The count comes from the stylesheet, so --slabs is the one
+// place it is written down.
+const SLABS = parseInt(getComputedStyle(deck.barEl).getPropertyValue('--slabs'), 10) || 24;
+for (let i = 0; i < SLABS; i++) deck.barEl.appendChild(document.createElement('i'));
+const slabEls = [...deck.barEl.children];
+
+function deckProgress(frac) {
+  const lit = Math.min(SLABS, Math.floor(frac * SLABS + 1e-9));
+  slabEls.forEach((el, i) => el.classList.toggle('on', i < lit));
+}
 
 function deckState() {
   const loaded = !!deck.bytes;
@@ -455,7 +504,7 @@ deck.fileEl.addEventListener('change', async () => {
   }
   deckRebuild();
   sys.machine.ejectTape();
-  deck.fillEl.style.width = '0%';
+  deckProgress(0);
   deckState();
   deckHint(first
     ? 'type  LOAD ""  then press play'
@@ -474,7 +523,7 @@ deckButton(deck.rewEl,   () => { sys.machine.loadTape(deck.bytes); deckHint('rew
 deckButton(deck.ejectEl, () => {
   sys.machine.ejectTape();
   deck.parts = []; deck.bytes = null; deck.name = ''; deck.fileEl.value = '';
-  deck.fillEl.style.width = '0%';
+  deckProgress(0);
   deckHint('');
 });
 deckState();
@@ -512,7 +561,7 @@ function drawDeck() {
   deck.motorEl.classList.toggle('on', sys.machine.motor);
   if (deck.saveEl.disabled === sys.machine.hasRecording) deckState();
   if (!tape) return;
-  deck.fillEl.style.width = (tape.progress * 100).toFixed(1) + '%';
+  deckProgress(tape.progress);
   if (tape.finished && !deck.doneShown) {
     deck.doneShown = true;
     deckHint('tape ended');
