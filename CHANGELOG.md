@@ -172,6 +172,14 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   runs, stilled under `prefers-reduced-motion`.
 
 ### Changed
+- **PROVENANCE sticks to the claim rather than the history behind it.** What
+  the work derives from, and what it does not, is unchanged and still the point
+  of the document; the account of how that position was arrived at has gone.
+  The checkable facts are unaffected — the first commit's date, the deliberate
+  divergence from MAME and its test, the tape results — though there are three
+  of them now rather than four.
+
+### Changed
 - **The cassette deck is one panel now, in the GenX-DOS design language.** It
   was a row of loose controls in a corner; it reads as a deck: what is in the
   machine on the top line, how far through it is in the middle, the transport
