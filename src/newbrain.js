@@ -365,7 +365,7 @@ export class NewBrain {
   // into a signal and presented at TPIN, and the real microcode reads it.
   loadTape(bytes, opts) {
     this.tape = bytes && bytes.length
-      ? new TapePlayer(encodeTape(bytes, opts))
+      ? (({ durations, dataEnd }) => new TapePlayer(durations, dataEnd))(encodeTape(bytes, opts))
       : null;
   }
 

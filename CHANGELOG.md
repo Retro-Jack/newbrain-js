@@ -144,6 +144,26 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   repository depends on the other; this one is authoritative and the two
   are kept in step.
 
+### Fixed
+- **"PLAYING" never went away.** The status sat on it for good once a tape had
+  been read, because it waited on the signal running out and the signal never
+  does: the ROM takes the last block, sees the last-block flag and stops the
+  motor, leaving the gap tone behind it unplayed. Nor does it reach the end of
+  the block — each carries nine trailer bytes nobody reads, and the motor
+  stops part way through them, 78 half cycles short, measured on BreakOut.
+
+  So `encodeTape` now reports where the last block's **payload** ends — count,
+  data, type byte, checksum — and the player has `played` beside `finished`.
+  The ROM passes that mark 120 half cycles before it stops, so the status
+  clears while the deck is still settling rather than hanging. `progress` is
+  measured against the same mark, which is also why the bar now reaches full
+  instead of stopping a slab short. `test/tape.test.mjs` pins all three.
+
+### Changed
+- **The motor lamp is a bead rather than a flat dot**, in `--green`: a
+  highlight off the top left, a dark rim, and a slow breath while the motor
+  runs, stilled under `prefers-reduced-motion`.
+
 ### Changed
 - **The cassette deck is one panel now, in the GenX-DOS design language.** It
   was a row of loose controls in a corner; it reads as a deck: what is in the

@@ -148,11 +148,27 @@
   }
   #bar i.on { background:var(--amber); }
   /* Lit while the ROM has the motor running, so the tape visibly moves only
-     when the machine is actually reading it. */
-  #motor { width:7px; height:7px; border-radius:50%; flex:none;
-           background:#2a2a2e; border:1px solid var(--line); }
-  #motor.on { background:var(--amber); border-color:var(--amber);
-              box-shadow:0 0 6px var(--amber); }
+     when the machine is actually reading it. A bead rather than a flat dot:
+     a highlight off the top left, a dark rim, and a slow breath while it runs
+     — the literal rgba values are --green, which cannot be given an alpha
+     without compositing. */
+  #motor {
+    width:10px; height:10px; border-radius:50%; flex:none;
+    background:radial-gradient(circle at 34% 30%, #3b3b42, #16161a 72%);
+    box-shadow:inset 0 1px 1px rgba(0,0,0,.6), 0 0 0 1px rgba(255,176,0,.16);
+  }
+  #motor.on {
+    background:radial-gradient(circle at 34% 30%, #c6ffd8 0%, var(--green) 48%, #15a846 100%);
+    animation:motor-breathe 1.15s ease-in-out infinite;
+  }
+  @keyframes motor-breathe {
+    0%, 100% { box-shadow:0 0 0 1px rgba(53,255,109,.40), 0 0 4px rgba(53,255,109,.45); }
+    50%      { box-shadow:0 0 0 1px rgba(53,255,109,.70), 0 0 10px 2px rgba(53,255,109,.85); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #motor.on { animation:none;
+                box-shadow:0 0 0 1px rgba(53,255,109,.6), 0 0 7px rgba(53,255,109,.7); }
+  }
   #romerr {
     position:fixed; inset:0; margin:auto; z-index:20;
     width:min(30rem,calc(100% - 32px)); height:max-content;
@@ -562,11 +578,15 @@ function drawDeck() {
   if (deck.saveEl.disabled === sys.machine.hasRecording) deckState();
   if (!tape) return;
   deckProgress(tape.progress);
-  if (tape.finished && !deck.doneShown) {
+  // `played`, not `finished`: the ROM stops the motor on the last block and
+  // never runs out the gap tone behind it, so the signal never ends on its own.
+  // Once the data has gone past there is nothing left to say, so the status
+  // clears rather than sitting on "playing" for good.
+  if (tape.played && !deck.doneShown) {
     deck.doneShown = true;
-    deckHint('tape ended');
+    deckHint('');
     deckState();
-  } else if (!tape.finished) {
+  } else if (!tape.played) {
     deck.doneShown = false;
   }
 }
