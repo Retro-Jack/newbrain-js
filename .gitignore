@@ -8,6 +8,17 @@ roms/*
 !roms/.gitkeep
 
 # ---------------------------------------------------------------------------
+# Tape images — never committed either.
+# ---------------------------------------------------------------------------
+# The software library, kept locally for testing. Same rule as the ROMs: none
+# of it is ours to redistribute, whatever its licence, so it stays out of the
+# repository, out of releases and out of any package. The two files in the
+# library that are NOT tape recordings are deliberately absent — Adv's ADV.BIN
+# is a raw memory image and Devpac's second half a raw program image, so
+# neither can be played into the cassette port.
+tapes/
+
+# ---------------------------------------------------------------------------
 # Upstream reference sources, kept locally while porting.
 # ---------------------------------------------------------------------------
 # BSD-3-Clause MAME sources, consulted for hardware behaviour. Not ours and
