@@ -154,7 +154,7 @@
       <span id="motor" title="cassette motor"></span>
       <span id="bar"><i id="barfill"></i></span>
       <span id="tapename">no tape</span>
-      <label>insert&hellip;<input id="tapefile" type="file" accept=".bas,.bin,.BAS,.BIN,.obj" hidden></label>
+      <label id="insert">insert&hellip;<input id="tapefile" type="file" accept=".bas,.bin,.BAS,.BIN,.obj" multiple hidden></label>
       <button id="play" disabled>play</button>
       <button id="rewind" disabled>rewind</button>
       <button id="eject" disabled>eject</button>
@@ -397,9 +397,18 @@ addEventListener('blur', () => sys.machine.clearKeys());
 // stows one away. That is what lets long programs load, and it also means the
 // tape genuinely waits rather than running on past the machine.
 const deck = {
+  // A cassette holds programs one after another, and a multi-part title is
+  // exactly that: Chess is a BASIC loader followed by a 16K binary, and the
+  // loader asks for the binary once it is running. So the tape is a LIST of
+  // files, concatenated. Each is already a chain of blocks whose type byte
+  // flags its own first and last, so the join needs nothing in between — the
+  // ROM reads the loader, stops at its last block, and finds the binary's
+  // leader where it left off when the program calls for it.
+  parts: [],
   bytes: null,
   name: '',
   fileEl:  document.getElementById('tapefile'),
+  insertEl: document.getElementById('insert'),
   nameEl:  document.getElementById('tapename'),
   playEl:  document.getElementById('play'),
   rewEl:   document.getElementById('rewind'),
@@ -420,17 +429,38 @@ function deckState() {
   deck.ejectEl.disabled = !loaded;
   deck.saveEl.disabled = !sys.machine.hasRecording;
   deck.nameEl.textContent = loaded ? deck.name : 'no tape';
+  deck.nameEl.title = loaded ? deck.parts.map(p => p.name).join('\n') : '';
+  // Once something is on the tape the same control appends to it, because
+  // that is what it now does.
+  deck.insertEl.firstChild.nodeValue = loaded ? 'add\u2026' : 'insert\u2026';
+}
+
+// Lays the parts end to end to make the tape.
+function deckRebuild() {
+  const total = deck.parts.reduce((n, p) => n + p.bytes.length, 0);
+  if (!total) { deck.bytes = null; deck.name = ''; return; }
+  const tape = new Uint8Array(total);
+  let at = 0;
+  for (const p of deck.parts) { tape.set(p.bytes, at); at += p.bytes.length; }
+  deck.bytes = tape;
+  deck.name = deck.parts.map(p => p.name).join(' + ');
 }
 
 deck.fileEl.addEventListener('change', async () => {
-  const file = deck.fileEl.files[0];
-  if (!file) return;
-  deck.bytes = new Uint8Array(await file.arrayBuffer());
-  deck.name = file.name;
+  const picked = [...deck.fileEl.files];
+  if (!picked.length) return;
+  const first = !deck.parts.length;
+  for (const file of picked) {
+    deck.parts.push({ name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) });
+  }
+  deckRebuild();
   sys.machine.ejectTape();
   deck.fillEl.style.width = '0%';
   deckState();
-  deckHint('type  LOAD ""  then press play');
+  deckHint(first
+    ? 'type  LOAD ""  then press play'
+    : `${deck.parts.length} programs on the tape, in that order`);
+  deck.fileEl.value = '';          // so the same file can be added again
   deck.fileEl.blur();
 });
 
@@ -443,7 +473,7 @@ deckButton(deck.playEl,  () => { sys.machine.loadTape(deck.bytes); deckHint('pla
 deckButton(deck.rewEl,   () => { sys.machine.loadTape(deck.bytes); deckHint('rewound; playing from the start'); });
 deckButton(deck.ejectEl, () => {
   sys.machine.ejectTape();
-  deck.bytes = null; deck.name = ''; deck.fileEl.value = '';
+  deck.parts = []; deck.bytes = null; deck.name = ''; deck.fileEl.value = '';
   deck.fillEl.style.width = '0%';
   deckHint('');
 });

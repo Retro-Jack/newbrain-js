@@ -154,6 +154,25 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `ubuntu-latest`, which began migrating to Ubuntu 26 on 19/10/2026.
 
 ### Fixed
+- **A tape could only hold one program, so multi-part titles could not load.**
+  Chess is a BASIC loader that asks for a 16K binary once it is running, and
+  the deck had nowhere to put the second file: `insert` replaced the tape
+  rather than adding to it, so the loader ran and then called for a binary
+  that was not there. A cassette holds programs one after another, and that is
+  now what the deck models — it keeps a list of files and lays them end to end.
+  Nothing is needed between them: each file is already a chain of blocks whose
+  type byte flags its own first and last, so the ROM reads the loader, stops at
+  its last block, and finds the binary's leader exactly where it left off.
+
+  The file input takes several files at once, and once a tape is in, `insert`
+  becomes `add` because that is what it then does. The names show in order,
+  with the full list on hover.
+
+  Verified end to end in the browser with `Chess loader.bas` + `Chess.bin`:
+  the loader reads, `run` starts it, the motor restarts and the tape carries on
+  from 9.1% into the binary, and the game comes up — title, author line, and
+  `NEWBRAIN CHESS` on the VF panel — and takes its input.
+
 - **The cassette controls were hard to read, and the page could clip them.**
   Two faults with one symptom. Disabled buttons used `opacity:.35`, which
   fades an element's text *and* its background together — 2.3:1 against each
