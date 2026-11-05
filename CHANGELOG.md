@@ -6,6 +6,14 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- `tools/detokenise.py` reversed the whole block stream instead of each
+  block's payload. Output looked right line for line but spliced every line
+  that straddled a block boundary, which invented 216 "damaged lines" across
+  26 of the library's programs. Caught by running one of them in the
+  emulator: the program the decoder called broken played perfectly. 48 of
+  the 49 programs read clean.
+
 ### Added
 - `tools/detokenise.py` — reads a NewBrain BASIC tape back to source. The
   format is undocumented anywhere we could find: a tape is a run of counted,

@@ -12,10 +12,12 @@ a 00, a two byte little-endian count, that many data bytes, a type byte, a two
 byte checksum, and a nine byte trailer the writer lays down and nobody reads.
 Block one holds the tape name; the program is every block after it.
 
-REVERSAL. The program body is stored BYTE-REVERSED, whole. Concatenate the
-payloads in file order and reverse the result and the program comes back, in
-ascending line order -- though not reliably so, because an edited program
-keeps its appended lines at the end of the tape, so sort by line number.
+REVERSAL. Each block's payload is stored BYTE-REVERSED, and the blocks stay
+in file order. So reverse each payload on its own and concatenate; reversing
+the whole stream instead looks right line for line, but silently splices
+every line that straddles a block boundary onto the wrong neighbour. That bug
+invented 200-odd "damaged" lines before a run under the emulator showed a
+supposedly broken program working perfectly.
 
 TWO TOKEN SETS. Keywords are single bytes 128-187, and the same value means
 two different things: set 1 for the keyword that OPENS a statement, set 2 for
@@ -139,7 +141,8 @@ def detok_line(raw):
 def detokenise(data):
     """-> (tape name, [lines]). Empty list means it is not BASIC."""
     blks = blocks(data)
-    body = b"".join(bytes(b[1]) for b in blks[1:])[::-1] if blks else data[::-1]
+    body = (b"".join(bytes(b[1])[::-1] for b in blks[1:]) if blks
+            else data[::-1])
     lines, first = [], True
     for chunk in body.split(b'\r'):
         c = chunk.lstrip(b'\x00 ')
