@@ -6,6 +6,11 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Removed
+- The green motor lamp on the cassette deck. The turning reels say the
+  same thing and say it plainly, so the lamp was a second indicator of
+  the same state needing its own explanation.
+
 ### Added
 - The cassette deck shows a cassette whose reels turn while the tape is
   running. Play or rewind engages the transport and save does too; after

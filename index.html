@@ -192,28 +192,6 @@
     background:rgba(131,125,110,.38);
   }
   #bar i.on { background:var(--amber); }
-  /* Lit while the ROM has the motor running, so the tape visibly moves only
-     when the machine is actually reading it. A bead rather than a flat dot:
-     a highlight off the top left, a dark rim, and a slow breath while it runs
-     — the literal rgba values are --green, which cannot be given an alpha
-     without compositing. */
-  #motor {
-    width:10px; height:10px; border-radius:50%; flex:none;
-    background:radial-gradient(circle at 34% 30%, #3b3b42, #16161a 72%);
-    box-shadow:inset 0 1px 1px rgba(0,0,0,.6), 0 0 0 1px rgba(255,176,0,.16);
-  }
-  #motor.on {
-    background:radial-gradient(circle at 34% 30%, #c6ffd8 0%, var(--green) 48%, #15a846 100%);
-    animation:motor-breathe 1.15s ease-in-out infinite;
-  }
-  @keyframes motor-breathe {
-    0%, 100% { box-shadow:0 0 0 1px rgba(53,255,109,.40), 0 0 4px rgba(53,255,109,.45); }
-    50%      { box-shadow:0 0 0 1px rgba(53,255,109,.70), 0 0 10px 2px rgba(53,255,109,.85); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    #motor.on { animation:none;
-                box-shadow:0 0 0 1px rgba(53,255,109,.6), 0 0 7px rgba(53,255,109,.7); }
-  }
   #romerr {
     position:fixed; inset:0; margin:auto; z-index:20;
     width:min(30rem,calc(100% - 32px)); height:max-content;
@@ -248,7 +226,6 @@
       <div id="cass" title="cassette"><i></i></div>
       <div id="deckrows">
       <div class="deckrow">
-        <span id="motor" title="cassette motor"></span>
         <span id="tapename">no tape</span>
         <span id="tapehint"></span>
       </div>
@@ -517,7 +494,6 @@ const deck = {
   ejectEl: document.getElementById('eject'),
   saveEl:  document.getElementById('save'),
   barEl:   document.getElementById('bar'),
-  motorEl: document.getElementById('motor'),
   cassEl:  document.getElementById('cass'),
   // The reels turn only once the transport has been engaged from the panel.
   // The motor line alone will not do: typing LOAD "" raises it and holds it
@@ -639,10 +615,8 @@ deckButton(deck.saveEl, () => {
 
 function drawDeck() {
   const tape = sys.machine.tape;
-  // The lamp follows the motor whether the machine is reading or writing.
-  // The reels follow it too, but only after play or save has been pressed —
-  // before that the deck is stopped however the motor line reads.
-  deck.motorEl.classList.toggle('on', sys.machine.motor);
+  // The reels follow the motor, but only after play or save has been
+  // pressed — before that the deck is stopped however the motor line reads.
   deck.cassEl.classList.toggle('on', deck.engaged && sys.machine.motor);
   if (deck.saveEl.disabled === sys.machine.hasRecording) deckState();
   if (!tape) return;
