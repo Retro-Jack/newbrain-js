@@ -51,6 +51,12 @@ there directly. The PDF carries a real text layer, so it was read with
 it. Where the manual and MAME disagreed, behaviour observed while running the
 real ROMs decided it.
 
+The BASIC keyword tables in `tools/detokenise.py` come from the same manual's
+reserved words table. That is an interface fact — which byte stands for which
+keyword — rather than anything of the publisher's own composition, and it is
+transcribed as a lookup table, not reproduced as text. Everything else about
+the tape format in that file was worked out from the files themselves.
+
 **The ROMs themselves, by running them.** Several of the hardest findings came
 from neither source. The COP420's SIO register being two different things
 depending on `EN0` — an asynchronous counter with `EN0 = 1`, a shift register

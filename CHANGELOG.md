@@ -7,6 +7,13 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- `tools/detokenise.py` — reads a NewBrain BASIC tape back to source. The
+  format is undocumented anywhere we could find: a tape is a run of counted,
+  checksummed blocks, the program body is stored byte-reversed whole, and
+  keywords are single bytes carrying two meanings each depending on whether
+  they open a statement. The two token sets are transcribed from the Grundy
+  Software Technical Manual. Recovers 47 of the 48 BASIC files in the local
+  library; the 48th turns out to be machine code under a `.bas` name.
 - Z80 memory map with ROM paging, including the power-up behaviour where every
   access decodes as bank 7 until PWRUP rises on its 5.6 second RC delay.
 - I/O port decode: CLCLK, COP microbus, ENRG1, TVL, TVTL and UST.

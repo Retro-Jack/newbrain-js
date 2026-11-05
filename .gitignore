@@ -25,6 +25,10 @@ tapes/
 # not needed to build or run this; ATTRIBUTION.md says where to get them.
 reference/
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # Working files
 screen.raw
 screen.png
