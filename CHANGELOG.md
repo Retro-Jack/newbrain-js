@@ -6,6 +6,18 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- The cassette deck shows a cassette whose reels turn while the tape is
+  running. Play or rewind engages the transport and save does too; after
+  that the reels follow the motor, so they stop between blocks as the tape
+  does and stop altogether when it ends. The motor line alone will not serve
+  as the cue — typing `LOAD ""` raises it and holds it high while the
+  machine waits for a signal, with nothing in the deck and nothing moving.
+  Only the reels and the tape window ever move, so the shell is one still
+  image and just that box is a sprite sheet driven by `steps()`: 98KB of PNG
+  against 2.7MB of animated GIF, and unlike a GIF it can be stopped and
+  started. Respects `prefers-reduced-motion`.
+
 ### Fixed
 - `tools/detokenise.py` reversed the whole block stream instead of each
   block's payload. Output looked right line for line but spliced every line

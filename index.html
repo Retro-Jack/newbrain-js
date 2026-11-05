@@ -96,9 +96,54 @@
      the transport along the bottom. */
   #deckwrap { margin-left:auto; min-width:0; }
   #deck {
-    display:flex; flex-direction:column; gap:7px;
+    display:flex; align-items:center; gap:11px;
     background:var(--panel); border:1px solid var(--line); border-radius:6px;
     padding:9px 11px;
+  }
+  #deckrows { display:flex; flex-direction:column; gap:7px; min-width:0; }
+
+  /* The cassette turns once play or save has been pressed and the ROM has
+     the motor running, and stops where it is when the motor does — which is
+     what a deck does, and reads as "not running" at a glance without a
+     second lamp to interpret.
+     Only the reels and the window ever move: measured across all 162 frames
+     of the artwork, everything that changes falls inside one 307x70 box at
+     +141+142. So the shell is a single still image and just that box is a
+     sprite sheet, which is 98KB of PNG against 2.7MB of GIF — and, unlike a
+     GIF, it can be stopped and started.
+     That box is cut out of the shell, or its own still reels would show
+     through the moving ones: the reel hubs are transparent in the artwork.
+     The box used is 334x90 at +129+132, which is wider than the moving
+     parts need: its edges sit midway between the reels and the label's
+     purple border across, and midway between the tape window and that
+     border down, so every edge falls in the plain white of the label rather
+     than through artwork. Shell and sprite are both placed in percentages
+     of the shell, so the two scale together and stay registered at any
+     size. */
+  #cass {
+    position:relative; flex:none; width:112px; aspect-ratio:590/373;
+    background:url(art/cassette.png) center/contain no-repeat;
+  }
+  #cass i {
+    position:absolute;
+    left:21.864%; top:35.389%; width:56.610%; height:24.129%;
+    background:url(art/cassette-reels.png) 0 0/100% 8200% no-repeat;
+    animation:reels 8.1s steps(81) infinite;
+    animation-play-state:paused;
+  }
+  #cass.on i { animation-play-state:running; }
+  /* 81 frames is one whole turn of the reels: frame 81 matches frame 0 to
+     within 17 pixels, so the loop closes on itself. 100ms a frame is the
+     artwork's own rate.
+     The sheet carries 82 rows, not 81. A percentage background-position is
+     measured against (image height - box height), so with N rows the usable
+     travel is N-1 boxes: 81 steps across an 81-row sheet lands between
+     frames and drifts a whole frame by the end of the cycle. The 82nd row
+     is a repeat of the first, never displayed, and it makes 0% to 100% in
+     steps(81) land exactly on frames 0 to 80. */
+  @keyframes reels { to { background-position-y:100%; } }
+  @media (prefers-reduced-motion: reduce) {
+    #cass.on i { animation:none; }
   }
   .deckrow { display:flex; align-items:center; gap:9px; }
   #tapename {
@@ -200,6 +245,8 @@
   </div>
   <div id="deckwrap">
     <div id="deck">
+      <div id="cass" title="cassette"><i></i></div>
+      <div id="deckrows">
       <div class="deckrow">
         <span id="motor" title="cassette motor"></span>
         <span id="tapename">no tape</span>
@@ -212,6 +259,7 @@
         <button id="rewind" disabled>rewind</button>
         <button id="eject" disabled>eject</button>
         <button id="save" disabled title="download what the machine has written to tape">save&hellip;</button>
+      </div>
       </div>
     </div>
   </div>
@@ -470,6 +518,12 @@ const deck = {
   saveEl:  document.getElementById('save'),
   barEl:   document.getElementById('bar'),
   motorEl: document.getElementById('motor'),
+  cassEl:  document.getElementById('cass'),
+  // The reels turn only once the transport has been engaged from the panel.
+  // The motor line alone will not do: typing LOAD "" raises it and holds it
+  // high while the machine sits waiting for a signal, with nothing in the
+  // deck and nothing moving, so the reels would spin at a stopped tape.
+  engaged: false,
   hintEl:  document.getElementById('tapehint'),
 };
 
@@ -544,9 +598,10 @@ deck.fileEl.addEventListener('change', async () => {
 function deckButton(el, fn) {
   el.addEventListener('click', () => { fn(); deckState(); el.blur(); });
 }
-deckButton(deck.playEl,  () => { sys.machine.loadTape(deck.bytes); deckHint('playing'); });
-deckButton(deck.rewEl,   () => { sys.machine.loadTape(deck.bytes); deckHint('rewound; playing from the start'); });
+deckButton(deck.playEl,  () => { deck.engaged = true; sys.machine.loadTape(deck.bytes); deckHint('playing'); });
+deckButton(deck.rewEl,   () => { deck.engaged = true; sys.machine.loadTape(deck.bytes); deckHint('rewound; playing from the start'); });
 deckButton(deck.ejectEl, () => {
+  deck.engaged = false;
   sys.machine.ejectTape();
   deck.parts = []; deck.bytes = null; deck.name = ''; deck.fileEl.value = '';
   deckProgress(0);
@@ -561,6 +616,7 @@ deckState();
 deckButton(deck.saveEl, () => {
   const bytes = sys.machine.recordedTape();
   if (!bytes.length) { deckHint('nothing recorded'); return; }
+  deck.engaged = true;
 
   // Name the file after the tape's own name block, if it has one.
   let name = 'newbrain';
@@ -584,7 +640,10 @@ deckButton(deck.saveEl, () => {
 function drawDeck() {
   const tape = sys.machine.tape;
   // The lamp follows the motor whether the machine is reading or writing.
+  // The reels follow it too, but only after play or save has been pressed —
+  // before that the deck is stopped however the motor line reads.
   deck.motorEl.classList.toggle('on', sys.machine.motor);
+  deck.cassEl.classList.toggle('on', deck.engaged && sys.machine.motor);
   if (deck.saveEl.disabled === sys.machine.hasRecording) deckState();
   if (!tape) return;
   deckProgress(tape.progress);
