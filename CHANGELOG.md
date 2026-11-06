@@ -6,6 +6,39 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- The monitor and the machine now use the shared bezels byte for byte, the
+  same files GenX-DOS serves from `systems/_shared/bezels/`. Both were
+  already rendered from those exact sources; `compose.py` was re-sizing them
+  on the way through and committing a second copy of the same picture. It no
+  longer does, so there is one image rather than two. The CUB loses a little
+  resolution (883 to 835 wide, still well above the size it draws at) and the
+  machine gains a lot (890 to 1060).
+- The cassette indicator's artwork is removed with it: `art/cassette.png`,
+  `art/cassette-reels.png` and the credit beside them. The deck replaced it.
+
+- The deck's artwork is toned down to sit with the other two machines:
+  saturation to 40%, a slight warm shift, and the blazing rim lights
+  pulled back. It was the loudest thing on the page and the least
+  important — the monitor, which is what you actually read, was the
+  dimmest. The readout's green is now the brightest thing on the deck,
+  which is the right way round.
+
+### Added
+- The deck's window is a readout: what is on the tape across the top,
+  scrolling when the names are too long to fit, then a rule and the
+  file count with a note that they load in that order. Green, in the
+  house DOS font, sized to hold a two-digit count.
+
+### Changed
+- The cassette indicator is now a cassette deck on the stage, above the
+  machine and sharing its width and left edge, in the space the monitor
+  and the machine left empty. The little cassette in the controls panel
+  is gone: it did the same job in a tenth of the room, too small to read
+  the reels turning. Same binding — play or save engages the transport,
+  then the reels follow the motor — and the same sprite-sheet trick, 37
+  rows for 36 frames so the steps land on exact frames.
+
 ### Removed
 - The green motor lamp on the cassette deck. The turning reels say the
   same thing and say it plainly, so the lamp was a second indicator of

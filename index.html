@@ -6,6 +6,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NewBrain</title>
 <style>
+  /* The house DOS font, shared by copy from GenX-DOS. A genuine IBM VGA
+     CP437 face, which is what the deck's little readout wants to be set in. */
+  @font-face {
+    font-family:'VGA437'; src:url(art/fonts/web437-vga.woff) format('woff');
+    font-display:swap;
+  }
   @font-face {
     font-family:'Segment16C';
     /* Segment16C by Daniel Wikholm, CC0 public domain. Subsetted here to
@@ -25,9 +31,10 @@
     --crt:#0B0D10; --panel:#14171C; --amber:#FFB000; --green:#35FF6D;
     --cyan:#4BC4D6; --paper:#D4D1C6; --dim:#837D6E;
     --line:rgba(255,176,0,.22);
-    --ctl:118px;
+    --ctl:118px; --top:40px;
   }
   html,body { margin:0; height:100%; background:var(--crt); }
+  body { box-sizing:border-box; padding-top:var(--top); }
   /* The stage keeps the 1920x1080 artwork's proportions, so every region can
      be positioned in percentages taken straight off the measured artwork. */
   /* --ctl is the height the controls row needs below the artwork. The stage is
@@ -39,7 +46,7 @@
   
   #stage {
     position:relative; width:100%;
-    max-width:min(1920px, calc((100vh - var(--ctl)) * 1920 / 1080));
+    max-width:min(1920px, calc((100vh - var(--ctl) - var(--top)) * 1920 / 1080));
     margin:0 auto;
     aspect-ratio:1920/1080;
     background:var(--crt);
@@ -50,8 +57,105 @@
      the image's aspect — which is what lets the screen regions be given as
      percentages of the part rather than of the page. Move or resize a part
      and its screen goes with it. */
-  #monitor, #machine { position:absolute; }
-  #monitor img, #machine img { display:block; width:100%; height:auto; pointer-events:none; }
+  #monitor, #machine, #tapedeck { position:absolute; }
+  #monitor img, #machine img, #tapedeck img { display:block; width:100%; height:auto; pointer-events:none; }
+
+  /* The deck sits above the machine, same width and same left edge, in the
+     space the monitor and the machine leave empty. Its reels turn while the
+     tape runs, which is the whole reason it is here: it is the only part of
+     the page that shows the machine doing something when nothing is being
+     drawn on the screen.
+     As with everything else here, only the reels move -- so the deck is one
+     still image and the box holding both reels is a sprite sheet stepped by
+     CSS. No hole is cut for it: unlike the little cassette this replaces,
+     these reel hubs are opaque, and each sprite frame is a crop of the same
+     photograph, so its border pixels already match what is underneath. */
+  #tapedeck i {
+    position:absolute; display:block;
+    background:url(art/deck-reels.webp) 0 0/100% 3700% no-repeat;
+    animation:deckreels 3.6s steps(36) infinite;
+    animation-play-state:paused;
+    pointer-events:none; z-index:1;
+  }
+  #tapedeck.on i { animation-play-state:running; }
+
+  /* The deck's own keys. Each is a hit area that carries the picture of that
+     key pressed, shown by raising its opacity -- so one small image per key
+     rather than a second copy of the whole deck, which is 9KB against 771KB.
+     They have to be OPAQUE, and are flattened onto the stage colour when
+     they are cut: a pressed key sits 15px lower, and the gap it leaves at
+     the top has to HIDE the un-pressed key underneath. Transparency there
+     would simply let it show through. */
+  #tapedeck .key {
+    position:absolute; z-index:3; cursor:pointer;
+    background-size:100% 100%; background-repeat:no-repeat;
+    opacity:0;
+  }
+  #tapedeck .key.down { opacity:1; }
+  #tapedeck .key.off  { cursor:default; }
+  #tapedeck .key[data-key=eject] { background-image:url(art/btn-eject.webp); }
+  #tapedeck .key[data-key=next]  { background-image:url(art/btn-next.webp); }
+  #tapedeck .key[data-key=rew]   { background-image:url(art/btn-rew.webp); }
+  #tapedeck .key[data-key=play]  { background-image:url(art/btn-play.webp); }
+  #tapedeck .key[data-key=ff]    { background-image:url(art/btn-ff.webp); }
+  #tapedeck .key[data-key=rec]   { background-image:url(art/btn-rec.webp); }
+
+  /* The readout in the deck's window: what is on the tape, and in what order.
+     Sized in container units so the type scales with the deck rather than
+     with the page -- the deck is a percentage of the stage, and the stage is
+     a percentage of the viewport, so nothing else here is in pixels either. */
+  #tapewin {
+    position:absolute; z-index:2; container-type:size;
+    display:flex; flex-direction:column; justify-content:center;
+    box-sizing:border-box;
+    font-family:'VGA437',ui-monospace,monospace;
+    color:var(--green); text-shadow:0 0 6px rgba(53,255,109,.45);
+    line-height:1.3; text-align:center; overflow:hidden;
+    pointer-events:none; white-space:nowrap;
+  }
+  /* Sized against the window's WIDTH, not its height: the longest line the
+     readout ever shows is "NN files on the tape", twenty characters, and
+     this font is 9x16 so twenty of them are 11.25em wide. Sizing by height
+     fits the four lines but says nothing about whether they fit across, and
+     that line was being clipped. */
+  /* The inset goes on the children, in container units, not on the window as
+     a percentage: a percentage padding resolves against the CONTAINING
+     BLOCK's width -- the whole deck here -- so "5%" quietly ate a third of
+     the window and squeezed the type to two thirds of its size. */
+  /* Type is sized against the window's WIDTH, not its height. The longest
+     line the readout can show is "NN files on the tape" -- twenty
+     characters, allowing a two-digit count -- and this font is 9x16, so
+     twenty of them come to 11.25em. Sizing by height fits the four lines
+     but says nothing about whether they fit across, and that line was
+     being clipped. */
+  #tapewin > * { font-size:7.8cqw; padding:0 4cqw; box-sizing:border-box; }
+  /* The tape's name is as long as its files are; it scrolls when it will not
+     fit, and sits still when it will. The text is doubled so the loop closes
+     on itself with no jump back. */
+  #twname, #twhint { overflow:hidden; }
+  #twname span, #twhint span { display:inline-block; }
+  #twname.scroll span, #twhint.scroll span { animation:tapescroll linear infinite; }
+  @keyframes tapescroll { to { transform:translateX(-50%); } }
+  #twrule, #twsep {
+    border-top:1px dashed currentColor; opacity:.55;
+    margin:4cqh 0; height:0; font-size:0;
+  }
+  /* The hint band earns its divider only when it has something to say;
+     otherwise an empty line and a rule sit there looking like a fault. */
+  #tapewin.nohint #twhint, #tapewin.nohint #twsep { display:none; }
+  /* With no tape there is no name, no bar and no count, so the rule would be
+     a line ruled across an empty readout. */
+  #tapewin.notape #twrule { display:none; }
+  @media (prefers-reduced-motion: reduce) {
+    #twname.scroll span, #twhint.scroll span { animation:none; }
+  }
+  /* 37 rows for 36 frames: a percentage background-position travels
+     (rows - 1) box heights, so the last row is a repeat of the first and
+     never shows. Without it every step lands between frames. */
+  @keyframes deckreels { to { background-position-y:100%; } }
+  @media (prefers-reduced-motion: reduce) {
+    #tapedeck.on i { animation:none; }
+  }
 
   /* Within the monitor: black backing, then the picture, then the bezel over
      both. The backing fills the aperture's bounding box so its rounded
@@ -69,7 +173,7 @@
      their own part, so they follow. */
   @media (max-width: 900px) {
     #stage { aspect-ratio:auto; height:auto; padding:16px 0; max-width:1920px; }
-    #monitor, #machine {
+    #monitor, #machine, #tapedeck {
       position:relative;
       left:0 !important; top:0 !important; width:92% !important;
       margin:0 auto 20px;
@@ -91,107 +195,6 @@
   #repo { color:var(--cyan); text-decoration:none; border-bottom:1px solid var(--line); }
   #repo:hover { color:#8fe3ef; border-bottom-color:currentColor; }
 
-  /* The cassette deck reads as one panel rather than a row of loose controls:
-     what is in the machine on top, how far through it is in the middle, and
-     the transport along the bottom. */
-  #deckwrap { margin-left:auto; min-width:0; }
-  #deck {
-    display:flex; align-items:center; gap:11px;
-    background:var(--panel); border:1px solid var(--line); border-radius:6px;
-    padding:9px 11px;
-  }
-  #deckrows { display:flex; flex-direction:column; gap:7px; min-width:0; }
-
-  /* The cassette turns once play or save has been pressed and the ROM has
-     the motor running, and stops where it is when the motor does — which is
-     what a deck does, and reads as "not running" at a glance without a
-     second lamp to interpret.
-     Only the reels and the window ever move: measured across all 162 frames
-     of the artwork, everything that changes falls inside one 307x70 box at
-     +141+142. So the shell is a single still image and just that box is a
-     sprite sheet, which is 98KB of PNG against 2.7MB of GIF — and, unlike a
-     GIF, it can be stopped and started.
-     That box is cut out of the shell, or its own still reels would show
-     through the moving ones: the reel hubs are transparent in the artwork.
-     The box used is 334x90 at +129+132, which is wider than the moving
-     parts need: its edges sit midway between the reels and the label's
-     purple border across, and midway between the tape window and that
-     border down, so every edge falls in the plain white of the label rather
-     than through artwork. Shell and sprite are both placed in percentages
-     of the shell, so the two scale together and stay registered at any
-     size. */
-  #cass {
-    position:relative; flex:none; width:112px; aspect-ratio:590/373;
-    background:url(art/cassette.png) center/contain no-repeat;
-  }
-  #cass i {
-    position:absolute;
-    left:21.864%; top:35.389%; width:56.610%; height:24.129%;
-    background:url(art/cassette-reels.png) 0 0/100% 8200% no-repeat;
-    animation:reels 8.1s steps(81) infinite;
-    animation-play-state:paused;
-  }
-  #cass.on i { animation-play-state:running; }
-  /* 81 frames is one whole turn of the reels: frame 81 matches frame 0 to
-     within 17 pixels, so the loop closes on itself. 100ms a frame is the
-     artwork's own rate.
-     The sheet carries 82 rows, not 81. A percentage background-position is
-     measured against (image height - box height), so with N rows the usable
-     travel is N-1 boxes: 81 steps across an 81-row sheet lands between
-     frames and drifts a whole frame by the end of the cycle. The 82nd row
-     is a repeat of the first, never displayed, and it makes 0% to 100% in
-     steps(81) land exactly on frames 0 to 80. */
-  @keyframes reels { to { background-position-y:100%; } }
-  @media (prefers-reduced-motion: reduce) {
-    #cass.on i { animation:none; }
-  }
-  .deckrow { display:flex; align-items:center; gap:9px; }
-  #tapename {
-    max-width:34ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    color:var(--paper);
-  }
-  /* min-height reserves the line whether or not there is a hint, so the panel
-     does not change height every time the deck has something to say. */
-  #tapehint { margin-left:auto; color:var(--green); white-space:nowrap;
-              text-transform:uppercase; letter-spacing:.09em; font-size:11px;
-              min-height:1.35em; }
-  .transport { gap:7px; flex-wrap:wrap; }
-  #deck button, #deck label {
-    font:inherit; color:var(--paper); background:var(--crt);
-    border:1px solid var(--line); border-radius:3px;
-    padding:4px 10px; cursor:pointer; white-space:nowrap;
-  }
-  #deck button:hover:not(:disabled), #deck label:hover {
-    color:var(--amber); border-color:var(--amber);
-  }
-  /* Explicit colours rather than opacity:.35. Opacity applies to the whole
-     element, so a disabled button's text AND its background both faded into
-     the page, landing at 2.3:1 against each other — and most of the deck is
-     disabled most of the time: play until a tape is in, rewind until it is
-     running, save until something has been recorded. */
-  #deck button:disabled {
-    color:var(--dim); border-color:rgba(255,176,0,.10); cursor:default;
-  }
-  #save { margin-left:auto; }
-
-  /* The progress bar is a row of slanted slabs that fill left to right. Both
-     layers carry the same gradient at the same background-size, so the tiles
-     are anchored to the left edge of each and the lit slabs land exactly on
-     the unlit ones however wide the fill is. */
-  /* The progress bar is a row of slanted slabs. They are real elements rather
-     than a tiled gradient: a gradient tile clips its own slant at both ends of
-     the tile, which sliced the first and last slab. Skewing a box leaves the
-     whole parallelogram visible, so every slab is complete, and lighting them
-     is then a matter of a class rather than a width. */
-  #bar {
-    --slabs:24;
-    display:flex; gap:3px; height:15px; padding:0 3px;
-  }
-  #bar i {
-    flex:1 1 0; height:100%; transform:skewX(-13deg);
-    background:rgba(131,125,110,.38);
-  }
-  #bar i.on { background:var(--amber); }
   #romerr {
     position:fixed; inset:0; margin:auto; z-index:20;
     width:min(30rem,calc(100% - 32px)); height:max-content;
@@ -206,6 +209,23 @@
 </head>
 <body>
 <div id="stage">
+  <div id="tapedeck" title="cassette deck"><img src="art/deck.webp" alt=""><i></i>
+    <span class="key" data-key="eject" title="insert a tape, or eject the one in the deck"></span>
+    <span class="key" data-key="next"  title="add the next part of a multi-part tape"></span>
+    <span class="key" data-key="rew"   title="rewind"></span>
+    <span class="key" data-key="play"  title="play"></span>
+    <span class="key" data-key="ff"    title="fast forward"></span>
+    <span class="key" data-key="rec"   title="save what the machine has recorded"></span>
+    <div id="tapewin" class="nohint notape" aria-hidden="true">
+      <div id="twhint"><span></span></div>
+      <div id="twsep"></div>
+      <div id="twname"><span></span></div>
+      <div id="twbar"></div>
+      <div id="twrule"></div>
+      <div id="twcount"></div>
+      <div id="twnote"></div>
+    </div>
+  </div>
   <div id="monitor">
     <div id="screenbg"></div>
     <canvas id="crt" width="640" height="250"></canvas>
@@ -221,25 +241,7 @@
     <div id="hud">booting&hellip;</div>
     <a id="repo" href="https://github.com/Retro-Jack/newbrain-js">source and ROM notes on GitHub</a>
   </div>
-  <div id="deckwrap">
-    <div id="deck">
-      <div id="cass" title="cassette"><i></i></div>
-      <div id="deckrows">
-      <div class="deckrow">
-        <span id="tapename">no tape</span>
-        <span id="tapehint"></span>
-      </div>
-      <span id="bar"></span>
-      <div class="deckrow transport">
-        <label id="insert">insert&hellip;<input id="tapefile" type="file" accept=".bas,.bin,.BAS,.BIN,.obj" multiple hidden></label>
-        <button id="play" disabled>play</button>
-        <button id="rewind" disabled>rewind</button>
-        <button id="eject" disabled>eject</button>
-        <button id="save" disabled title="download what the machine has written to tape">save&hellip;</button>
-      </div>
-      </div>
-    </div>
-  </div>
+  <input id="tapefile" type="file" accept=".bas,.bin,.BAS,.BIN,.obj" multiple hidden>
 </div>
 
 <script type="module">
@@ -302,11 +304,16 @@ const reg = await fetch('art/regions.json').then(r => r.json());
 
   put(document.getElementById('monitor'), reg.cub.place);
   put(document.getElementById('machine'), reg.machine.place);
+  put(document.getElementById('tapedeck'), reg.deck.place);
 
   within(document.getElementById('screenbg'), reg.cub.hole);
   within(document.getElementById('crt'),      reg.cub.crt);
 
   within(document.getElementById('vfd'), reg.machine.vfd);
+  within(document.querySelector('#tapedeck i'), reg.deck.reels);
+  within(document.getElementById('tapewin'), reg.deck.window);
+  for (const [k, r] of Object.entries(reg.deck.buttons))
+    within(document.querySelector(`#tapedeck .key[data-key="${k}"]`), r);
 }
 
 const names = ['aben191.ic6','cdi3.ic7','ef iss 1.ic8','char eprom iss 1.ic453','cop420-guw.ic419'];
@@ -487,49 +494,136 @@ const deck = {
   bytes: null,
   name: '',
   fileEl:  document.getElementById('tapefile'),
-  insertEl: document.getElementById('insert'),
-  nameEl:  document.getElementById('tapename'),
-  playEl:  document.getElementById('play'),
-  rewEl:   document.getElementById('rewind'),
-  ejectEl: document.getElementById('eject'),
-  saveEl:  document.getElementById('save'),
-  barEl:   document.getElementById('bar'),
-  cassEl:  document.getElementById('cass'),
+  deckEl:  document.getElementById('tapedeck'),
   // The reels turn only once the transport has been engaged from the panel.
   // The motor line alone will not do: typing LOAD "" raises it and holds it
   // high while the machine sits waiting for a signal, with nothing in the
   // deck and nothing moving, so the reels would spin at a stopped tape.
   engaged: false,
-  hintEl:  document.getElementById('tapehint'),
 };
 
-function deckHint(text) { deck.hintEl.textContent = text || ''; }
+const TW_GAP = '\u00a0\u00a0\u00a0\u00b7\u00a0\u00a0\u00a0';
+
+// A line of the readout, scrolled only when it will not fit.
+//
+// The separator goes on the end of BOTH copies, not between them. Written as
+// text+gap+text the span is 2*text+gap wide, so translating -50% moves
+// text+gap/2 -- half a separator short of one period, and it jumps by that
+// much every time round. Written as (text+gap)+(text+gap) the halves are
+// identical, -50% is exactly one period, and the loop closes.
+function twFit(box, text) {
+  const span = box.firstElementChild;
+  span.textContent = text;
+  box.classList.remove('scroll');
+  span.style.animationDuration = '';
+  if (!text) return;
+  requestAnimationFrame(() => {
+    if (span.scrollWidth - box.clientWidth <= 1) return;
+    span.textContent = (text + TW_GAP).repeat(2);
+    box.classList.add('scroll');
+    // A steady reading pace whatever the length: one pass takes as long as
+    // the text is wide.
+    span.style.animationDuration = (span.scrollWidth / 2 / 26).toFixed(1) + 's';
+  });
+}
+
+function deckHint(text) {
+  // The deck's own readout is the only place this goes now. The text is often
+  // longer than the twenty characters the window holds, so it scrolls exactly
+  // as the tape's name does.
+  twFit(document.getElementById('twhint'), text || '');
+  document.getElementById('tapewin').classList.toggle('nohint', !text);
+}
 
 // The bar fills a slab at a time: a fraction is floored to whole slabs, and 1
 // lights every one. The count comes from the stylesheet, so --slabs is the one
 // place it is written down.
-const SLABS = parseInt(getComputedStyle(deck.barEl).getPropertyValue('--slabs'), 10) || 24;
-for (let i = 0; i < SLABS; i++) deck.barEl.appendChild(document.createElement('i'));
-const slabEls = [...deck.barEl.children];
-
-function deckProgress(frac) {
-  const lit = Math.min(SLABS, Math.floor(frac * SLABS + 1e-9));
-  slabEls.forEach((el, i) => el.classList.toggle('on', i < lit));
-}
-
+// What each key is allowed to do, given what is in the deck. This used to be
+// the panel's `disabled` flags; with the panel gone it is written down here.
+const can = { eject:true, next:false, rew:false, play:false, rec:false };
 function deckState() {
-  const loaded = !!deck.bytes;
+  const loaded  = !!deck.bytes;
   const playing = !!sys.machine.tape;
-  deck.playEl.disabled  = !loaded || playing;
-  deck.rewEl.disabled   = !playing;
-  deck.ejectEl.disabled = !loaded;
-  deck.saveEl.disabled = !sys.machine.hasRecording;
-  deck.nameEl.textContent = loaded ? deck.name : 'no tape';
-  deck.nameEl.title = loaded ? deck.parts.map(p => p.name).join('\n') : '';
-  // Once something is on the tape the same control appends to it, because
-  // that is what it now does.
-  deck.insertEl.firstChild.nodeValue = loaded ? 'add\u2026' : 'insert\u2026';
+  can.eject = true;                     // insert when empty, eject when not
+  can.next  = loaded;                   // parts after the first
+  can.play  = loaded && !playing;
+  can.rew   = playing;
+  can.rec   = sys.machine.hasRecording;
+  deckKeys();
+  tapeWindow();
 }
+
+// ---- the deck's own keys --------------------------------------------------
+// They drive the panel's controls rather than repeating them, so what is
+// allowed when, and what the hint says, stay written down in one place. A key
+// whose control is disabled does nothing and stops looking clickable.
+const KEYS = {};
+for (const el of document.querySelectorAll('#tapedeck .key')) KEYS[el.dataset.key] = el;
+
+const keyAction = {
+  // Eject does double duty, which is what the two symbols moulded on it say:
+  // with nothing in the deck it opens the file picker, and with a tape in it
+  // ejects that tape and every part of it.
+  eject: () => (deck.parts.length ? doEject() : deck.fileEl.click()),
+  // Parts after the first go on with NEXT.
+  next:  () => deck.fileEl.click(),
+  rew:   doRewind,
+  play:  doPlay,
+  ff:    null,                            // nothing wired to it yet
+  rec:   doSave,
+};
+
+function deckKeys() {
+  for (const [name, el] of Object.entries(KEYS))
+    el.classList.toggle('off', !can[name]);
+}
+
+for (const [name, el] of Object.entries(KEYS)) {
+  el.addEventListener('click', () => {
+    if (!can[name] || !keyAction[name]) return;
+    // Play stays down for as long as the tape runs, so it is left to the
+    // frame loop; the rest are momentary and flash.
+    if (name !== 'play') {
+      el.classList.add('down');
+      setTimeout(() => el.classList.remove('down'), 170);
+    }
+    keyAction[name]();
+    deckState();
+  });
+}
+
+// The deck's own window: what is on the tape, and in what order. It says the
+// same as the panel below the stage, but it says it on the machine, which is
+// where you are looking while a tape loads.
+const twName  = document.getElementById('twname');
+const twBar   = document.getElementById('twbar');
+const twCount = document.getElementById('twcount');
+const twNote  = document.getElementById('twnote');
+// Eighteen cells plus its two brackets is twenty characters, which is what
+// fits across the window at this type size -- the same twenty that sets it.
+const TW_CELLS = 18;
+function twProgress(frac) {
+  if (frac === null) { twBar.textContent = ''; return; }
+  const lit = Math.max(0, Math.min(TW_CELLS, Math.round(frac * TW_CELLS)));
+  twBar.textContent = '[' + '#'.repeat(lit) + '='.repeat(TW_CELLS - lit) + ']';
+}
+
+function tapeWindow() {
+  const n = deck.parts.length;
+  document.getElementById('tapewin').classList.toggle('notape', !n);
+  const name = n ? deck.name : 'no tape';
+  // A tape in the deck shows an empty trough; an empty deck shows nothing.
+  twProgress(n ? (sys.machine.tape ? sys.machine.tape.progress : 0) : null);
+  twCount.textContent = n ? `${n} file${n === 1 ? '' : 's'} on the tape` : '';
+  // Order only means something when there is more than one.
+  twNote.textContent  = n > 1 ? 'in that order' : '';
+
+  twFit(twName, name);
+}
+
+// Called once everything the readout needs exists: deckState() reaches
+// tapeWindow(), which uses the consts declared just above.
+deckState();
 
 // Lays the parts end to end to make the tape.
 function deckRebuild() {
@@ -551,7 +645,7 @@ deck.fileEl.addEventListener('change', async () => {
   }
   deckRebuild();
   sys.machine.ejectTape();
-  deckProgress(0);
+  twProgress(0);
   deckState();
   // A file that is not in tape format contributes no blocks, and encodeTape
   // simply has nothing to lay down for it — so it would go on the tape
@@ -569,27 +663,26 @@ deck.fileEl.addEventListener('change', async () => {
   deck.fileEl.blur();
 });
 
-// Blur after every click, or Space and Enter would work the button instead of
-// reaching the machine's keyboard.
-function deckButton(el, fn) {
-  el.addEventListener('click', () => { fn(); deckState(); el.blur(); });
+function doPlay() {
+  deck.engaged = true; sys.machine.loadTape(deck.bytes); deckHint('playing');
 }
-deckButton(deck.playEl,  () => { deck.engaged = true; sys.machine.loadTape(deck.bytes); deckHint('playing'); });
-deckButton(deck.rewEl,   () => { deck.engaged = true; sys.machine.loadTape(deck.bytes); deckHint('rewound; playing from the start'); });
-deckButton(deck.ejectEl, () => {
+function doRewind() {
+  deck.engaged = true; sys.machine.loadTape(deck.bytes);
+  deckHint('rewound; playing from the start');
+}
+function doEject() {
   deck.engaged = false;
   sys.machine.ejectTape();
   deck.parts = []; deck.bytes = null; deck.name = ''; deck.fileEl.value = '';
-  deckProgress(0);
+  twProgress(null);
   deckHint('');
-});
-deckState();
+}
 
 // Hands back whatever the machine has written to tape. The bytes are read off
 // the tape line and demodulated, so the file is the same shape as one off a
 // real cassette — the COP's own 00 in front of each block included — and it
 // loads straight back in.
-deckButton(deck.saveEl, () => {
+function doSave() {
   const bytes = sys.machine.recordedTape();
   if (!bytes.length) { deckHint('nothing recorded'); return; }
   deck.engaged = true;
@@ -611,16 +704,18 @@ deckButton(deck.saveEl, () => {
   a.click();
   URL.revokeObjectURL(url);
   deckHint(`saved ${name}.bas, ${bytes.length} bytes`);
-});
+}
 
 function drawDeck() {
   const tape = sys.machine.tape;
   // The reels follow the motor, but only after play or save has been
   // pressed — before that the deck is stopped however the motor line reads.
-  deck.cassEl.classList.toggle('on', deck.engaged && sys.machine.motor);
-  if (deck.saveEl.disabled === sys.machine.hasRecording) deckState();
+  deck.deckEl.classList.toggle('on', deck.engaged && sys.machine.motor);
+  // Play is held down while the tape is running, as it would be on the deck.
+  KEYS.play.classList.toggle('down', deck.engaged && !!tape && !tape.played);
+  if (can.rec !== sys.machine.hasRecording) deckState();
   if (!tape) return;
-  deckProgress(tape.progress);
+  twProgress(tape.progress);
   // `played`, not `finished`: the ROM stops the motor on the last block and
   // never runs out the gap tone behind it, so the signal never ends on its own.
   // Once the data has gone past there is nothing left to say, so the status

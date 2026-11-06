@@ -92,6 +92,16 @@ The VF display's 16-segment glyphs.
 - Shipped subsetted to `U+0020-007E` plus `U+2588`, converted from the
   original TTF, as `Segment16C-Regular.woff2` and `Segment16C-Regular.woff`.
 
+### Web437 IBM VGA 9x16 — `art/fonts/web437-vga.woff`
+
+The deck window's readout. The house DOS font, shared by copy from GenX-DOS.
+
+- **VileR**, 2016-2020, from the Ultimate Oldschool PC Font Pack
+  (<https://int10h.org/oldschool-pc-fonts/>)
+- Licence: **CC BY-SA 4.0**
+  (<https://creativecommons.org/licenses/by-sa/4.0/>)
+- A genuine IBM VGA text-mode CP437 face. Unmodified.
+
 ### Bezel artwork — `art/`
 
 Two images, built by [`art/compose.py`](art/compose.py): `cub.png`, the

@@ -22,14 +22,16 @@ nb  = Image.open(f"{HERE}/src/NewBrain.png").convert("RGBA")
 # machine in front of it on the right, overlapping the baseline slightly.
 # The monitor carries the content, so it gets the size; the machine only has
 # to stay legible, and sits lower as if in front of it.
-CUB_H  = 760
-cub_s  = CUB_H / cub.height
-cub    = cub.resize((round(cub.width * cub_s), CUB_H), Image.LANCZOS)
+# The CUB is used at its native size: this is the same file GenX-DOS serves
+# from systems/_shared/bezels/, byte for byte, and re-rendering it here only
+# produced a second copy of the same picture at a size nothing needed.
+cub_s  = 1.0
+CUB_H  = cub.height
 CUB_X, CUB_Y = 55, 135
 
-NB_W   = 890
-nb_s   = NB_W / nb.width
-nb     = nb.resize((NB_W, round(nb.height * nb_s)), Image.LANCZOS)
+# Same again for the machine: the shared bezel, used as it is.
+nb_s   = 1.0
+NB_W   = nb.width
 NB_X, NB_Y = 985, 455
 
 assert CUB_X + cub.width  <= W, "monitor overflows the canvas"
