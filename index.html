@@ -120,9 +120,12 @@
      leaves its row empty instead of pulling the ones under it up.
 
      The cell is the font's own: this face is 9x16 with ascent and descent
-     coming to exactly 1em, so a glyph box one row tall is also 0.5625 rows
-     wide, and setting the type to a row's height makes the two grids the
-     same grid.
+     coming to exactly 1em, so setting the type to a row's height makes the
+     character grid and the glyph grid the same grid. The column width comes
+     from `ch`, which tracks the advance the rasteriser actually uses -- 0.562
+     of a row here, not the 0.5625 the font file designs for, because Chrome
+     quantises advances. Measured, 21ch and 21 advances agree exactly, which
+     is the only thing the grid depends on.
 
      100cqh/7 is that height. It goes on the CHILDREN, not on #tapewin: this
      element is the container those units resolve against, and a container
@@ -141,7 +144,18 @@
      The lines are centred in JS instead, by whole columns, which is the only
      kind of centring a character display has. white-space:pre above is what
      keeps those leading spaces from being collapsed away. */
-  #tapewin > * { font-size:calc(100cqh / 7); width:21ch; justify-self:center; }
+  #tapewin > * { font-size:calc(100cqh / 7); width:21ch; justify-self:center;
+                 position:relative; top:0.0692em; }
+  /* That nudge centres the ink rather than the cells. Seven rows fill the
+     window exactly, so the cell grid is flush to both edges -- but the ink
+     inside the cells is not centred in them. Measured across the printable
+     set, it runs from the very top of the cell (the quote marks reach it,
+     and "Type  LOAD ""  then press play." puts them in row one) to 1.93px
+     short of the bottom, where the descenders of g j p q y stop. So the
+     readout sat hard against the top of the window with a gap under it,
+     top-heavy by 0.138 of a row. Half of that, 0.0692em, splits the
+     difference; it is in em so it tracks the type, and the descenders have
+     the room to give back. */
   #twhint { grid-row:1; }  #twsep  { grid-row:2; }
   #twname { grid-row:3; }  #twbar  { grid-row:4; }
   #twrule { grid-row:5; }  #twcount{ grid-row:6; }

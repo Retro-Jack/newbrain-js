@@ -29,10 +29,23 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   rules above it. There is no half a character on a character display, so
   each line is padded to its column and the block is what gets centred.
 
+  The grid is centred on its ink, not on its cells. Seven rows fill the
+  window exactly, so the cells are flush to both edges -- but the ink inside
+  them is not centred in them. Measured across the printable set it runs
+  from the very top of the cell, which the quote marks reach, to 1.93px
+  short of the bottom, where the descenders of g j p q y stop. The readout
+  therefore sat hard against the top of the window with a gap beneath it,
+  top-heavy by 0.138 of a row, and `Type  LOAD ""  then press play.` put
+  those quotes in row one against the edge. The rows carry half that back,
+  0.0692em, which measures out at 0.95px clear above and 0.98px below.
+
   Sizing falls out of the grid instead of being chosen: the type is a row
   high (`100cqh/7`), and since this face is 9x16 with ascent and descent
-  coming to exactly 1em, a glyph box one row tall is 0.5625 rows wide and
-  the character grid and the pixel grid become the same grid. Twenty-one
+  coming to exactly 1em, the character grid and the glyph grid become the
+  same grid. Columns come from `ch`, which tracks the advance the rasteriser
+  actually uses -- 0.562 of a row, not the 0.5625 the font file designs for,
+  because Chrome quantises advances; measured, 21ch and 21 advances agree
+  exactly, which is all the grid depends on. Twenty-one
   columns is both what fits and the longest line the readout can show. The
   type ends up slightly larger than before, 7.9cqw against 7.8, because the
   grid's gutter replaced a hand-set padding that was costing more.
