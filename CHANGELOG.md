@@ -106,6 +106,16 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   against a grain of 4.1.
 
 ### Changed
+- **The readout names the file going past, not the whole tape.** It used to
+  join every part with " + ", which for Pacman is thirty-eight characters
+  against twenty-one columns -- so the name scrolled, and a name that is
+  scrolling is a name you cannot read at a glance. Each part's offset in the
+  concatenated tape is now known, so the line names whichever file the tape
+  is in. Verified on Pacman: `Pacman.bas` until 25.8%, which is exactly where
+  its 2508 bytes end in a 9725-byte tape, then the next. It no longer scrolls
+  at all. A single filename longer than twenty-one characters still can, and
+  still should.
+
 - The top line steps when it scrolls, a character at a time, rather than
   gliding. A real readout shifts its buffer by a cell; it has no way to move
   half of one. The travel is one period -- the span holds the text and its

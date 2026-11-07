@@ -578,7 +578,11 @@ const deck = {
   // leader where it left off when the program calls for it.
   parts: [],
   bytes: null,
-  name: '',
+  // Where each part starts in the concatenated tape, so the readout can say
+  // which file is going past rather than listing every one of them.
+  offsets: [],
+  total: 0,
+  showing: -1,
   fileEl:  document.getElementById('tapefile'),
   deckEl:  document.getElementById('tapedeck'),
   // The reels turn only once the transport has been engaged from the panel.
@@ -744,7 +748,8 @@ function tapeWindow() {
   // and no use at all on a phone. It is said across two lines, the second
   // of which borrows the count's row -- "Press eject to insert" is exactly
   // twenty-one characters, so it fills the grid without scrolling.
-  const name = n ? deck.name : 'No tape';
+  deck.showing = currentPart();
+  const name = n ? deck.parts[deck.showing].name : 'No tape';
   // A tape in the deck shows an empty trough; an empty deck shows nothing.
   twProgress(n ? (sys.machine.tape ? sys.machine.tape.progress : 0) : null);
   // One sentence across two rows, so the count line takes the comma and the
@@ -765,12 +770,29 @@ deckState();
 // Lays the parts end to end to make the tape.
 function deckRebuild() {
   const total = deck.parts.reduce((n, p) => n + p.bytes.length, 0);
-  if (!total) { deck.bytes = null; deck.name = ''; return; }
+  deck.offsets = []; deck.total = total; deck.showing = -1;
+  if (!total) { deck.bytes = null; return; }
   const tape = new Uint8Array(total);
   let at = 0;
-  for (const p of deck.parts) { tape.set(p.bytes, at); at += p.bytes.length; }
+  for (const p of deck.parts) { deck.offsets.push(at); tape.set(p.bytes, at); at += p.bytes.length; }
   deck.bytes = tape;
-  deck.name = deck.parts.map(p => p.name).join(' + ');
+}
+
+// Which file is going past. The readout names that one rather than the whole
+// tape: Pacman's three parts joined with " + " is thirty-eight characters
+// against twenty-one columns, so it scrolled, and a name that is scrolling is
+// a name you cannot read at a glance.
+//
+// At a boundary the offset lands on the next part's first byte, which is the
+// right answer: the file just read is finished with, and the one the machine
+// is about to be asked for is the one worth naming.
+function currentPart() {
+  const n = deck.parts.length;
+  if (!n) return -1;
+  const at = sys.machine.tape ? sys.machine.tape.progress * deck.total : 0;
+  let i = 0;
+  while (i < n - 1 && at >= deck.offsets[i + 1]) i++;
+  return i;
 }
 
 deck.fileEl.addEventListener('change', async () => {
@@ -814,7 +836,8 @@ function doRewind() {
 function doEject() {
   deck.engaged = false;
   sys.machine.ejectTape();
-  deck.parts = []; deck.bytes = null; deck.name = ''; deck.fileEl.value = '';
+  deck.parts = []; deck.bytes = null; deck.fileEl.value = '';
+  deck.offsets = []; deck.total = 0; deck.showing = -1;
   twProgress(null);
   deckHint('');
 }
@@ -857,6 +880,15 @@ function drawDeck() {
   if (can.rec !== sys.machine.hasRecording) deckState();
   if (!tape) return;
   twProgress(tape.progress);
+
+  // Name the file the tape is in now, and only re-set it when it changes --
+  // twFit restarts the scroll, so calling it every frame would peg a long
+  // name to its first character for ever.
+  const part = currentPart();
+  if (part !== deck.showing && part >= 0) {
+    deck.showing = part;
+    twFit(twName, deck.parts[part].name);
+  }
 
   // A load is not one continuous run of tape. The ROM stops the motor between
   // blocks while it digests what it just read, and on a long program that
