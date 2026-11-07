@@ -82,8 +82,19 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   rather than re-exported from the master, because `deck.webp` is that master
   downscaled and then embossed with the transport symbols -- re-exporting
   drops them. And the render's spindles sit wider apart than the cassette's
-  hubs, so they are moved onto them, the wells they leave behind rebuilt from
-  a surface fitted to the surrounding wall plus its own grain.
+  hubs, so they are moved onto them.
+
+  Clearing the wells they leave behind took three goes. Cloning wall from
+  above left a lighter circle, because the only clean wall is an 80px band
+  that is too short for the disc and has a gradient of its own. Fitting a
+  surface to the ring outside the disc fixed that but left a faint arc round
+  each spindle: the well is sunk into the wall and lifts a halo 3 to 5 levels
+  high that is still there at r=105, and a disc cannot open wide enough to
+  swallow it without eating the raised panel between the hubs. So the halo is
+  now measured in rings -- outliers dropped so the panel does not drag the
+  mean -- and subtracted with a taper to nothing, before the disc is filled.
+  No boundary left for an arc to form on: the dome across r=45 to r=125 falls
+  from 3.0 and 4.7 levels to 1.3 and 1.8, under the wall's own grain.
 
 ### Changed
 - The top line steps when it scrolls, a character at a time, rather than

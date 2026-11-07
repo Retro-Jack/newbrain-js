@@ -72,11 +72,21 @@ mids = 0.5 * (bins[:-1] + bins[1:])
 # what first had the hubs 17px too low).
 SPINDLES = ((614, 434), (986, 434))      # in the empty-bay render
 HUBS = ((643, 440), (952, 440))          # in deck.webp, which is what counts
-# 66 is where the well stops: the radial profile is spline and rim detail out
-# to about 64 and flat wall at 37 beyond it. It also clears the raised panel
-# between the hubs at both ends once moved -- 643+66 against a panel starting
-# near 720, and 952-66 against one ending near 880.
+# WELL_R is the spindle itself: spline and rim detail out to about 64, so 66
+# lifts the whole thing. It also clears the raised panel between the hubs once
+# moved -- 643+66 against a panel starting near 720, and 952-66 against one
+# ending near 880.
 WELL_R = 66
+
+# ERASE_R is how much has to be painted out behind it, which is a good deal
+# more. The well is sunk into the wall and throws a halo: measured by
+# 90-degree sector from the old centre, the wall sits at 37-38 but the sector
+# above the well reads 58 at r=60 and does not come back down to 38 until
+# r≈96, with the shadow below it equally deep. An azimuthal mean hides this
+# -- the bright top and dark bottom cancel -- which is how a first attempt at
+# 68 came to leave a visible arc sweeping round the right spindle, on the
+# side its move exposed.
+ERASE_R = 96
 # A flat stretch of back wall: measured, y 290..370 is the only band in the
 # bay with no structure in it (sd about 3, nothing bright). Its mottle is
 # what the rebuilt wall is textured with.
@@ -109,6 +119,16 @@ def _rebuild_wall(out, rgb, cx, cy, r):
     d = np.hypot(xx - pad, yy - pad)
     ring = (d > r + 3) & (d < r + 19)
 
+    # Reject what is not wall before fitting. At this radius the ring can
+    # clip the raised panel between the hubs, and least squares has no
+    # defence against that -- a corner of panel in the sample tilts the whole
+    # surface. Anything more than three median deviations off the ring's own
+    # median is dropped.
+    lum = sub.mean(2)
+    med = np.median(lum[ring])
+    mad = np.median(np.abs(lum[ring] - med)) or 1.0
+    ring = ring & (np.abs(lum - med) < 3.0 * 1.4826 * mad)
+
     X, Y = (xx - pad) / 100.0, (yy - pad) / 100.0
     terms = [np.ones_like(X), X, Y, X * X, X * Y, Y * Y]
     A = np.column_stack([t[ring] for t in terms])
@@ -130,6 +150,56 @@ def _rebuild_wall(out, rgb, cx, cy, r):
     out[y0:y1, x0:x1] = sub * (1 - m) + base * m
 
 
+def _flatten_halo(img, cx, cy, r_from=100, r_to=170):
+    """Subtract the brightness dome the old well leaves on the wall.
+
+    Filling a disc is not enough. The well is sunk into the wall and lifts a
+    wide, soft halo around itself -- measured from the old centre the wall
+    reads 3 to 5 levels high at r=50 and is still a level or two high at
+    r=105, fading out somewhere past 150. A disc cannot be opened wide enough
+    to swallow that without eating the raised panel between the hubs, and a
+    disc that stops inside the halo leaves its own rim showing, which is what
+    the eye picks up: a faint arc round each spindle.
+
+    So the dome is measured and subtracted instead. The wall's mean is taken
+    in rings, outliers dropped so the panel and the bay's edges do not drag
+    it, the far rings are taken as the true level, and the excess is removed
+    with a taper to nothing at r_to. No boundary anywhere, so nothing for an
+    arc to form on. It runs before the disc is filled, so the surface fit
+    that fills it samples wall that is already flat.
+    """
+    pad = r_to + 6
+    y0, y1, x0, x1 = cy - pad, cy + pad, cx - pad, cx + pad
+    sub = img[y0:y1, x0:x1, :3]
+    h, w = sub.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float64)
+    d = np.hypot(xx - pad, yy - pad)
+    lum = sub.mean(2)
+
+    edges = np.arange(r_from, r_to + 1, 5.0)
+    rs, vs = [], []
+    for i in range(len(edges) - 1):
+        m = (d >= edges[i]) & (d < edges[i + 1])
+        if m.sum() < 60:
+            continue
+        v = lum[m]
+        med = np.median(v)
+        mad = np.median(np.abs(v - med)) or 1.0
+        rs.append((edges[i] + edges[i + 1]) / 2)
+        vs.append(v[np.abs(v - med) < 2.5 * 1.4826 * mad].mean())
+    if len(rs) < 4:
+        return
+    rs, vs = np.array(rs), np.array(vs)
+    far = vs[-3:].mean()
+    excess = vs - far
+
+    prof = np.interp(d, rs, excess, left=excess[0], right=0.0)
+    prof *= np.clip((r_to - d) / 40.0, 0, 1)
+    share = sub.reshape(-1, 3).mean(0)
+    share = share / max(share.mean(), 1e-6)
+    img[y0:y1, x0:x1, :3] = sub - prof[:, :, None] * share
+
+
 def move_spindles(rgb):
     """Shift each spindle onto the hub it would actually drive."""
     out = rgb.copy()
@@ -140,7 +210,9 @@ def move_spindles(rgb):
     taken = [rgb[cy - pad:cy + pad, cx - pad:cx + pad].copy() for cx, cy in SPINDLES]
 
     for cx, cy in SPINDLES:
-        _rebuild_wall(out, rgb, cx, cy, WELL_R + 2)
+        _flatten_halo(out, cx, cy)
+    for cx, cy in SPINDLES:
+        _rebuild_wall(out, out, cx, cy, ERASE_R)
 
     # Then put them back down on the hubs.
     m = _disc(size, size, pad, pad, WELL_R)[:, :, None]
