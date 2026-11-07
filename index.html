@@ -106,40 +106,61 @@
      a percentage of the viewport, so nothing else here is in pixels either. */
   #tapewin {
     position:absolute; z-index:2; container-type:size;
-    display:flex; flex-direction:column; justify-content:center;
+    display:grid; grid-template-rows:repeat(7, 1fr);
     box-sizing:border-box;
     font-family:'VGA437',ui-monospace,monospace;
     color:var(--green); text-shadow:0 0 6px rgba(53,255,109,.45);
-    line-height:1.3; text-align:center; overflow:hidden;
+    line-height:1; text-align:center; overflow:hidden;
     pointer-events:none; white-space:nowrap;
   }
-  /* Sized against the window's WIDTH, not its height: the longest line the
-     readout ever shows is "NN files on the tape", twenty characters, and
-     this font is 9x16 so twenty of them are 11.25em wide. Sizing by height
-     fits the four lines but says nothing about whether they fit across, and
-     that line was being clipped. */
-  /* The inset goes on the children, in container units, not on the window as
-     a percentage: a percentage padding resolves against the CONTAINING
-     BLOCK's width -- the whole deck here -- so "5%" quietly ate a third of
-     the window and squeezed the type to two thirds of its size. */
-  /* Type is sized against the window's WIDTH, not its height. The longest
-     line the readout can show is "NN files on the tape" -- twenty
-     characters, allowing a two-digit count -- and this font is 9x16, so
-     twenty of them come to 11.25em. Sizing by height fits the four lines
-     but says nothing about whether they fit across, and that line was
-     being clipped. */
-  #tapewin > * { font-size:7.8cqw; padding:0 4cqw; box-sizing:border-box; }
+  /* A character grid: seven rows of twenty-one columns, which is what the
+     readout is. The rows are grid tracks, so they are equal because the grid
+     makes them so -- not because a line-height was tuned until they looked
+     it. Each line is pinned to its own row below, so a line that is hidden
+     leaves its row empty instead of pulling the ones under it up.
+
+     The cell is the font's own: this face is 9x16 with ascent and descent
+     coming to exactly 1em, so a glyph box one row tall is also 0.5625 rows
+     wide, and setting the type to a row's height makes the two grids the
+     same grid.
+
+     100cqh/7 is that height. It goes on the CHILDREN, not on #tapewin: this
+     element is the container those units resolve against, and a container
+     query unit used on the container itself resolves against its ancestor
+     instead, which would silently size the type off the wrong box.
+
+     Twenty-one columns comes to 509.7 of the window's 546 deck px, leaving
+     18 either side as the gutter -- and twenty-one is exactly the longest
+     line the readout can show, "NN files on the tape," with a two-digit
+     count. The grid and the content end up the same width, which is the
+     point of picking it this way round. */
+  #tapewin > * { font-size:calc(100cqh / 7); }
+  #twhint { grid-row:1; }  #twsep  { grid-row:2; }
+  #twname { grid-row:3; }  #twbar  { grid-row:4; }
+  #twrule { grid-row:5; }  #twcount{ grid-row:6; }
+  #twnote { grid-row:7; }
   /* The tape's name is as long as its files are; it scrolls when it will not
      fit, and sits still when it will. The text is doubled so the loop closes
      on itself with no jump back. */
   #twname, #twhint { overflow:hidden; }
-  #twname span, #twhint span { display:inline-block; }
+  /* vertical-align:top matters more than it looks. An inline-block sits on
+     the baseline by default, so the line box grows by the strut's descent
+     below it -- a quarter of an em in this face. These two rows cannot grow,
+     being grid tracks, so instead their content would stand 1.25 rows tall
+     inside a one-row cell: the name and the hint would sit off their grid
+     line while every other row sat on it, and the overflow would be clipped.
+     Aligning to the top drops the box out of baseline alignment, and the
+     line box is then just the box: one row, like its neighbours. */
+  #twname span, #twhint span { display:inline-block; vertical-align:top; }
   #twname.scroll span, #twhint.scroll span { animation:tapescroll linear infinite; }
   @keyframes tapescroll { to { transform:translateX(-50%); } }
-  #twrule, #twsep {
-    border-top:1px dashed currentColor; opacity:.55;
-    margin:4cqh 0; height:0; font-size:0;
-  }
+  /* Drawn in actual hyphens, not a border: the readout is a character
+     display, so its rules are made of characters like everything else in it.
+     Twenty of them is exactly the width of the progress bar, so the two line
+     up. No margin -- one cell tall like every other row, which is what keeps
+     the readout on an even pitch. */
+  #twrule, #twsep { opacity:.55; }
+  #twrule::before, #twsep::before { content:'--------------------'; }
   /* The hint band earns its divider only when it has something to say;
      otherwise an empty line and a rule sit there looking like a fault. */
   #tapewin.nohint #twhint, #tapewin.nohint #twsep { display:none; }
@@ -209,13 +230,13 @@
 </head>
 <body>
 <div id="stage">
-  <div id="tapedeck" title="cassette deck"><img src="art/deck.webp" alt=""><i></i>
-    <span class="key" data-key="eject" title="insert a tape, or eject the one in the deck"></span>
-    <span class="key" data-key="next"  title="add the next part of a multi-part tape"></span>
-    <span class="key" data-key="rew"   title="rewind"></span>
-    <span class="key" data-key="play"  title="play"></span>
-    <span class="key" data-key="ff"    title="fast forward"></span>
-    <span class="key" data-key="rec"   title="save what the machine has recorded"></span>
+  <div id="tapedeck" title="Cassette deck"><img src="art/deck.webp" alt=""><i></i>
+    <span class="key" data-key="eject" title="Insert a tape, or eject the one in the deck"></span>
+    <span class="key" data-key="next"  title="Add the next part of a multi-part tape"></span>
+    <span class="key" data-key="rew"   title="Rewind"></span>
+    <span class="key" data-key="play"  title="Play"></span>
+    <span class="key" data-key="ff"    title="Fast forward"></span>
+    <span class="key" data-key="rec"   title="Save what the machine has recorded"></span>
     <div id="tapewin" class="nohint notape" aria-hidden="true">
       <div id="twhint"><span></span></div>
       <div id="twsep"></div>
@@ -238,8 +259,8 @@
 </div>
 <div id="controls">
   <div id="meta">
-    <div id="hud">booting&hellip;</div>
-    <a id="repo" href="https://github.com/Retro-Jack/newbrain-js">source and ROM notes on GitHub</a>
+    <div id="hud">Booting&hellip;</div>
+    <a id="repo" href="https://github.com/Retro-Jack/newbrain-js">Source and ROM notes on GitHub</a>
   </div>
   <input id="tapefile" type="file" accept=".bas,.bin,.BAS,.BIN,.obj" multiple hidden>
 </div>
@@ -599,8 +620,8 @@ const twName  = document.getElementById('twname');
 const twBar   = document.getElementById('twbar');
 const twCount = document.getElementById('twcount');
 const twNote  = document.getElementById('twnote');
-// Eighteen cells plus its two brackets is twenty characters, which is what
-// fits across the window at this type size -- the same twenty that sets it.
+// Eighteen cells plus its two brackets is twenty characters, which is also
+// the width of the rules above and below it.
 const TW_CELLS = 18;
 function twProgress(frac) {
   if (frac === null) { twBar.textContent = ''; return; }
@@ -611,12 +632,15 @@ function twProgress(frac) {
 function tapeWindow() {
   const n = deck.parts.length;
   document.getElementById('tapewin').classList.toggle('notape', !n);
-  const name = n ? deck.name : 'no tape';
+  const name = n ? deck.name : 'No tape.';
   // A tape in the deck shows an empty trough; an empty deck shows nothing.
   twProgress(n ? (sys.machine.tape ? sys.machine.tape.progress : 0) : null);
-  twCount.textContent = n ? `${n} file${n === 1 ? '' : 's'} on the tape` : '';
+  // One sentence across two rows, so the count line takes the comma and the
+  // note finishes it. With a single file there is no note to finish it, so
+  // the comma would be left dangling -- that line ends in a stop instead.
+  twCount.textContent = n ? `${n} file${n === 1 ? '' : 's'} on the tape${n > 1 ? ',' : '.'}` : '';
   // Order only means something when there is more than one.
-  twNote.textContent  = n > 1 ? 'in that order' : '';
+  twNote.textContent  = n > 1 ? 'in that order.' : '';
 
   twFit(twName, name);
 }
@@ -653,22 +677,22 @@ deck.fileEl.addEventListener('change', async () => {
   // not a recording. Say so rather than let it look loaded.
   const notTapes = deck.parts.filter(p => !tapeBlocks(p.bytes).length);
   if (notTapes.length) {
-    deckHint(`${notTapes[0].name} is not a tape file`);
+    deckHint(`${notTapes[0].name} is not a tape file.`);
   } else {
     deckHint(first
-      ? 'type  LOAD ""  then press play'
-      : `${deck.parts.length} programs on the tape, in that order`);
+      ? 'Type  LOAD ""  then press play.'
+      : `${deck.parts.length} programs on the tape, in that order.`);
   }
   deck.fileEl.value = '';          // so the same file can be added again
   deck.fileEl.blur();
 });
 
 function doPlay() {
-  deck.engaged = true; sys.machine.loadTape(deck.bytes); deckHint('playing');
+  deck.engaged = true; sys.machine.loadTape(deck.bytes); deckHint('Playing.');
 }
 function doRewind() {
   deck.engaged = true; sys.machine.loadTape(deck.bytes);
-  deckHint('rewound; playing from the start');
+  deckHint('Rewound; playing from the start.');
 }
 function doEject() {
   deck.engaged = false;
@@ -684,7 +708,7 @@ function doEject() {
 // loads straight back in.
 function doSave() {
   const bytes = sys.machine.recordedTape();
-  if (!bytes.length) { deckHint('nothing recorded'); return; }
+  if (!bytes.length) { deckHint('Nothing recorded.'); return; }
   deck.engaged = true;
 
   // Name the file after the tape's own name block, if it has one.
@@ -703,7 +727,7 @@ function doSave() {
   a.href = url; a.download = name + '.bas';
   a.click();
   URL.revokeObjectURL(url);
-  deckHint(`saved ${name}.bas, ${bytes.length} bytes`);
+  deckHint(`Saved ${name}.bas, ${bytes.length} bytes.`);
 }
 
 function drawDeck() {

@@ -7,6 +7,47 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- The readout is laid out on a character grid: seven rows of twenty-one
+  columns, which is what it always was pretending to be. The rows are grid
+  tracks, so they are equal because the grid makes them so, rather than
+  because a line-height was tuned until they looked it. Each line is pinned
+  to its own row, so one that is hidden leaves its row empty instead of
+  pulling the rest up.
+
+  This replaces a flex column whose rules were zero-height elements with a
+  margin above and below, which made the gap at a rule about twice the gap
+  between two lines of text. The rules are now twenty actual hyphens -- the
+  width of the progress bar, so the two line up -- rather than a dashed
+  border.
+
+  Sizing falls out of the grid instead of being chosen: the type is a row
+  high (`100cqh/7`), and since this face is 9x16 with ascent and descent
+  coming to exactly 1em, a glyph box one row tall is 0.5625 rows wide and
+  the character grid and the pixel grid become the same grid. Twenty-one
+  columns is both what fits and the longest line the readout can show. The
+  type ends up slightly larger than before, 7.9cqw against 7.8, because the
+  grid's gutter replaced a hand-set padding that was costing more.
+
+  Two details that do not show until they are wrong. The unit goes on the
+  children, not on the window: the window is the container those units
+  resolve against, and a container query unit used on the container itself
+  resolves against its ancestor instead. And the name and hint rows need
+  `vertical-align:top`, because they hold an inline-block for the scrolling
+  and an inline-block sits on the baseline, which would stand their content
+  a quarter of a row proud of a cell that cannot grow to take it.
+
+  One consequence worth knowing: with no tape in the deck, "No tape." sits
+  on the name's row, which is row three of seven and so one row above the
+  middle. A fixed grid does not re-centre what is left.
+
+- The readout's messages are in sentence case and punctuated, as are the
+  status line, the button tooltips and the link beside them. The file count
+  and the note below it are now one sentence across two rows -- "20 files on
+  the tape," then "in that order." -- so a single file ends its line with a
+  stop instead of a dangling comma. The longest line the window has to hold
+  grows by the full stop, from twenty characters to twenty-one, which is what
+  the type size is set against.
+
 - The monitor and the machine now use the shared bezels byte for byte, the
   same files GenX-DOS serves from `systems/_shared/bezels/`. Both were
   already rendered from those exact sources; `compose.py` was re-sizing them
