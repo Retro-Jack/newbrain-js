@@ -690,18 +690,40 @@ const twNote  = document.getElementById('twnote');
 // width of the grid -- the same span as the rules above and below it.
 const TW_CELLS = 19;
 
-// How long the motor must stay stopped before the deck decides the machine
-// is back at the prompt rather than merely between blocks.
+// Is BASIC sitting at its prompt, waiting to be told something?
 //
-// Measured, loading Pacman's three files: the gaps between blocks came out
-// at 0.18s, 2.70s and 3.72s, while the real stop at the prompt -- the
-// loader read in, waiting to be RUN -- ran 69s, as long as it takes someone
-// to notice. The two populations are far apart but the short one reaches
-// further than it looks: an earlier 3s threshold fired during a 3.72s block
-// gap and told the user to type something while the tape was still going,
-// and the tape started again 0.7s later. 6s clears the longest gap seen by
-// a comfortable margin and still answers before anyone has given up.
-const TW_SETTLE = 6000;
+// This started out as a guess from the transport -- motor stopped for longer
+// than a block gap -- and the guess was wrong often enough to matter: the
+// gaps between blocks measured 0.18s, 2.70s and 3.72s loading Pacman, and a
+// 3s threshold duly fired in the middle of the 3.72s one and told the user
+// to type something while the tape was still running.
+//
+// The machine will just say, though. The display is characters in RAM, 40 to
+// a row on a 64-byte stride from `tvl`, in plain ASCII, and the cursor is
+// 0x7F. Measured across a whole Pacman load: 0x7F never appears while the
+// tape is reading, never appears during either block gap, and blinks
+// steadily through the 13s the machine spent at the prompt. That is the
+// signal, and unlike a timer it cannot be wrong about a slow block.
+//
+// Blinking is why it is remembered rather than tested outright: it is dark
+// for about 280ms at a time, so a single look lands in the gap often enough.
+const TW_CURSOR = 0x7f;
+const TW_BLINK = 800;          // comfortably longer than the dark phase
+const TW_ROWS = 24, TW_COLS = 40, TW_STRIDE = 64;
+
+function cursorShowing() {
+  const ram = sys.machine.ram;
+  const base = sys.machine.tvl;
+  const stride = sys.machine.c80l ? TW_STRIDE * 2 : TW_STRIDE;
+  const cols = sys.machine.c80l ? TW_COLS * 2 : TW_COLS;
+  for (let r = 0; r < TW_ROWS; r++) {
+    const a = base + r * stride;
+    for (let c = 0; c < cols; c++) {
+      if (ram[(a + c) & 0x7fff] === TW_CURSOR) return true;
+    }
+  }
+  return false;
+}
 function twProgress(frac) {
   if (frac === null) { twBar.textContent = ''; return; }
   const lit = Math.max(0, Math.min(TW_CELLS, Math.round(frac * TW_CELLS)));
@@ -712,7 +734,11 @@ function tapeWindow() {
   const n = deck.parts.length;
   document.getElementById('tapewin').classList.toggle('notape', !n);
   deck.deckEl.classList.toggle('empty', !n);
-  const name = n ? deck.name : 'No tape.';
+  // Not just the state but the remedy: the eject button is how a tape gets
+  // in, and that is only discoverable from a tooltip, which is a hover away
+  // and no use at all on a phone. Twenty-one characters, so it fits the
+  // readout's grid exactly without scrolling.
+  const name = n ? deck.name : 'No tape. Press eject.';
   // A tape in the deck shows an empty trough; an empty deck shows nothing.
   twProgress(n ? (sys.machine.tape ? sys.machine.tape.progress : 0) : null);
   // One sentence across two rows, so the count line takes the comma and the
@@ -854,6 +880,10 @@ function drawDeck() {
     // the second kind, and an earlier version of this line confidently told
     // the user to type the wrong one.
     //
+    // The prompt is read off the screen, not inferred from how long the tape
+    // has been still -- see cursorShowing() for why the timer was not good
+    // enough.
+    //
     // This infers the prompt from the transport rather than seeing it. The
     // machine has no text buffer to read -- the screen goes from video RAM
     // straight to pixels, in rows that are terminated rather than fixed
@@ -863,14 +893,15 @@ function drawDeck() {
     // blocks, so TW_SETTLE sits well clear of that. A single-file tape
     // cannot reach here, because `played` goes true and the hint clears.
     if (waiting && deck.parts.length > 1) {
-      if (deck.stoppedAt === undefined) {
-        deck.stoppedAt = performance.now();
-      } else if (!deck.promptShown && performance.now() - deck.stoppedAt > TW_SETTLE) {
+      if (cursorShowing()) deck.cursorAt = performance.now();
+      const atPrompt = deck.cursorAt !== undefined &&
+                       performance.now() - deck.cursorAt < TW_BLINK;
+      if (atPrompt && !deck.promptShown) {
         deck.promptShown = true;
         deckHint('Waiting. Type  RUN  or  LOAD ""  for the next part.');
       }
     } else {
-      deck.stoppedAt = undefined;
+      deck.cursorAt = undefined;
       deck.promptShown = false;
     }
   }

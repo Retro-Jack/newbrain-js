@@ -12,18 +12,30 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   sit until told what to do. The readout now says so rather than leaving the
   deck looking stalled.
 
-  It is inferred from the transport, not read off the screen -- the machine
-  has no text buffer, its display going from video RAM straight to pixels in
-  rows that are terminated rather than fixed width -- so the test is how long
-  the motor has been still. Loading Pacman's three files, the gaps between
-  blocks measured 0.18s, 2.70s and 3.72s while the real stop at the prompt
-  ran 69s, so the line waits 6s. A first attempt at 3s fired during that
-  3.72s block gap and told the user to type something while the tape was
-  still running.
+  The prompt is read off the screen. It began as a guess from the transport
+  -- motor stopped longer than a block gap -- and the guess was wrong often
+  enough to matter: loading Pacman the gaps between blocks run 0.18s, 2.70s
+  and 3.72s, and a 3s threshold duly fired in the middle of the 3.72s one,
+  telling the user to type something while the tape was still going.
+
+  The machine will simply say, though. Its display is characters in RAM, 40
+  to a row on a 64-byte stride, in plain ASCII, and the cursor is 0x7F.
+  Measured across a whole load: 0x7F never appears while the tape is
+  reading, never appears during either block gap, and blinks steadily
+  through the 13s at the prompt. It is remembered for 800ms rather than
+  tested outright, because it is dark for about 280ms at a time.
+
+  That also makes it four times quicker to speak up -- 1.56s after the tape
+  stopped, against 6.06s for the timer it replaced.
 
   It does not say which command, because the deck cannot know: a plain
   multi-file tape wants `LOAD ""` again, while a tape fronted by a loader --
   Pacman is one -- wants `RUN` and then fetches the rest itself.
+
+- **"No tape." now says what to do about it** -- "No tape. Press eject."
+  The eject button is how a tape gets in, and that was only discoverable
+  from a tooltip, which is a hover away and no use at all on a phone. It is
+  twenty-one characters, so it fits the readout's grid exactly.
 
 - **"Please wait." while the motor is stopped mid-load.** A load is not one
   continuous run of tape: the ROM stops the motor between blocks while it
