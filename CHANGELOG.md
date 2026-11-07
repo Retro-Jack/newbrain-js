@@ -7,6 +7,15 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- The top line steps when it scrolls, a character at a time, rather than
+  gliding. A real readout shifts its buffer by a cell; it has no way to move
+  half of one. The travel is one period -- the span holds the text and its
+  separator twice, and -50% is exactly one of them -- so a `steps()` of that
+  period's character count moves precisely one character per step. The
+  reading pace is unchanged at about three characters a second; it is the
+  same duration, quantised. Measured over 110 samples: eleven distinct
+  positions, every one a whole number of characters, nothing in between.
+
 - The readout is laid out on a character grid: seven rows of twenty-one
   columns, which is what it always was pretending to be. The rows are grid
   tracks, so they are equal because the grid makes them so, rather than

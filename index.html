@@ -191,7 +191,13 @@
      Aligning to the top drops the box out of baseline alignment, and the
      line box is then just the box: one row, like its neighbours. */
   #twname span, #twhint span { display:inline-block; vertical-align:top; }
-  #twname.scroll span, #twhint.scroll span { animation:tapescroll linear infinite; }
+  /* No timing function here on purpose: twFit sets it, because the number of
+     steps is the number of characters in the text and only twFit knows that. */
+  #twname.scroll span, #twhint.scroll span { animation:tapescroll infinite; }
+  /* -50% is exactly one period -- the span holds (text+gap) twice -- so a
+     steps() of the period's character count advances precisely one character
+     per step. A real readout shifts its buffer a character at a time; it has
+     no way to move half of one. */
   @keyframes tapescroll { to { transform:translateX(-50%); } }
   /* Drawn in actual hyphens, not a border: the readout is a character
      display, so its rules are made of characters like everything else in it.
@@ -580,14 +586,20 @@ function twFit(box, text) {
   span.textContent = text;
   box.classList.remove('scroll');
   span.style.animationDuration = '';
+  span.style.animationTimingFunction = '';
   if (!text) return;
   requestAnimationFrame(() => {
     if (span.scrollWidth - box.clientWidth <= 1) return;
-    span.textContent = (text + TW_GAP).repeat(2);
+    const period = text + TW_GAP;
+    span.textContent = period.repeat(2);
     box.classList.add('scroll');
     // A steady reading pace whatever the length: one pass takes as long as
     // the text is wide.
     span.style.animationDuration = (span.scrollWidth / 2 / 26).toFixed(1) + 's';
+    // Stepped, not smooth. The travel is one period, so one step per
+    // character in it moves the line a whole cell at a time, which is the
+    // only way a character display can move anything.
+    span.style.animationTimingFunction = `steps(${period.length})`;
   });
 }
 
