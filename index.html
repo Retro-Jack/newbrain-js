@@ -110,8 +110,8 @@
     box-sizing:border-box;
     font-family:'VGA437',ui-monospace,monospace;
     color:var(--green); text-shadow:0 0 6px rgba(53,255,109,.45);
-    line-height:1; text-align:center; overflow:hidden;
-    pointer-events:none; white-space:nowrap;
+    line-height:1; overflow:hidden;
+    pointer-events:none; white-space:pre;
   }
   /* A character grid: seven rows of twenty-one columns, which is what the
      readout is. The rows are grid tracks, so they are equal because the grid
@@ -132,9 +132,16 @@
      Twenty-one columns comes to 509.7 of the window's 546 deck px, leaving
      18 either side as the gutter -- and twenty-one is exactly the longest
      line the readout can show, "NN files on the tape," with a two-digit
-     count. The grid and the content end up the same width, which is the
-     point of picking it this way round. */
-  #tapewin > * { font-size:calc(100cqh / 7); }
+     count. The rules and the progress bar are twenty-one wide too, so every
+     full-width line ends on the same column. */
+  /* Each line is a twenty-one column block, centred in the window as a
+     block -- never by text-align. Centring text puts an odd-length line
+     half a cell off an even-length one, which is exactly how the count line
+     came to sit half a character left of the bar and the rules above it.
+     The lines are centred in JS instead, by whole columns, which is the only
+     kind of centring a character display has. white-space:pre above is what
+     keeps those leading spaces from being collapsed away. */
+  #tapewin > * { font-size:calc(100cqh / 7); width:21ch; justify-self:center; }
   #twhint { grid-row:1; }  #twsep  { grid-row:2; }
   #twname { grid-row:3; }  #twbar  { grid-row:4; }
   #twrule { grid-row:5; }  #twcount{ grid-row:6; }
@@ -156,11 +163,11 @@
   @keyframes tapescroll { to { transform:translateX(-50%); } }
   /* Drawn in actual hyphens, not a border: the readout is a character
      display, so its rules are made of characters like everything else in it.
-     Twenty of them is exactly the width of the progress bar, so the two line
-     up. No margin -- one cell tall like every other row, which is what keeps
-     the readout on an even pitch. */
+     Twenty-one of them is the full width of the grid, which the progress bar
+     and the count line also span, so all three end on the same column. No
+     margin -- one cell tall like every other row. */
   #twrule, #twsep { opacity:.55; }
-  #twrule::before, #twsep::before { content:'--------------------'; }
+  #twrule::before, #twsep::before { content:'---------------------'; }
   /* The hint band earns its divider only when it has something to say;
      otherwise an empty line and a rule sit there looking like a fault. */
   #tapewin.nohint #twhint, #tapewin.nohint #twsep { display:none; }
@@ -525,6 +532,13 @@ const deck = {
 
 const TW_GAP = '\u00a0\u00a0\u00a0\u00b7\u00a0\u00a0\u00a0';
 
+// The readout is twenty-one columns wide, and a line is centred in it by
+// whole columns -- there is no half a character on a character display. An
+// odd gap is spent on the right, the way a typewriter would. Anything too
+// long to fit comes back unchanged and is left to scroll.
+const TW_COLS = 21;
+const twCentre = (t) => ' '.repeat(Math.max(0, (TW_COLS - t.length) >> 1)) + t;
+
 // A line of the readout, scrolled only when it will not fit.
 //
 // The separator goes on the end of BOTH copies, not between them. Written as
@@ -534,13 +548,13 @@ const TW_GAP = '\u00a0\u00a0\u00a0\u00b7\u00a0\u00a0\u00a0';
 // identical, -50% is exactly one period, and the loop closes.
 function twFit(box, text) {
   const span = box.firstElementChild;
-  span.textContent = text;
+  span.textContent = twCentre(text);
   box.classList.remove('scroll');
   span.style.animationDuration = '';
   if (!text) return;
   requestAnimationFrame(() => {
     if (span.scrollWidth - box.clientWidth <= 1) return;
-    span.textContent = (text + TW_GAP).repeat(2);
+    span.textContent = (text + TW_GAP).repeat(2);   // scrolling: no padding
     box.classList.add('scroll');
     // A steady reading pace whatever the length: one pass takes as long as
     // the text is wide.
@@ -620,9 +634,9 @@ const twName  = document.getElementById('twname');
 const twBar   = document.getElementById('twbar');
 const twCount = document.getElementById('twcount');
 const twNote  = document.getElementById('twnote');
-// Eighteen cells plus its two brackets is twenty characters, which is also
-// the width of the rules above and below it.
-const TW_CELLS = 18;
+// Nineteen cells plus its two brackets is twenty-one characters, the full
+// width of the grid -- the same span as the rules above and below it.
+const TW_CELLS = 19;
 function twProgress(frac) {
   if (frac === null) { twBar.textContent = ''; return; }
   const lit = Math.max(0, Math.min(TW_CELLS, Math.round(frac * TW_CELLS)));
@@ -638,9 +652,9 @@ function tapeWindow() {
   // One sentence across two rows, so the count line takes the comma and the
   // note finishes it. With a single file there is no note to finish it, so
   // the comma would be left dangling -- that line ends in a stop instead.
-  twCount.textContent = n ? `${n} file${n === 1 ? '' : 's'} on the tape${n > 1 ? ',' : '.'}` : '';
+  twCount.textContent = n ? twCentre(`${n} file${n === 1 ? '' : 's'} on the tape${n > 1 ? ',' : '.'}`) : '';
   // Order only means something when there is more than one.
-  twNote.textContent  = n > 1 ? 'in that order.' : '';
+  twNote.textContent  = n > 1 ? twCentre('in that order.') : '';
 
   twFit(twName, name);
 }

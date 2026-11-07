@@ -16,9 +16,18 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
   This replaces a flex column whose rules were zero-height elements with a
   margin above and below, which made the gap at a rule about twice the gap
-  between two lines of text. The rules are now twenty actual hyphens -- the
-  width of the progress bar, so the two line up -- rather than a dashed
-  border.
+  between two lines of text. The rules are now twenty-one actual hyphens
+  rather than a dashed border, the full width of the grid, which the
+  progress bar and the count line span too -- so every full-width line
+  starts and ends on the same column. The bar carries nineteen cells
+  between its brackets to do it, up from eighteen.
+
+  Lines are centred by whole columns, in code, rather than by `text-align`.
+  Centring text puts an odd-length line half a cell off an even-length one,
+  and that is what went wrong first time: the twenty-one character count
+  line sat half a character to the left of the twenty-character bar and
+  rules above it. There is no half a character on a character display, so
+  each line is padded to its column and the block is what gets centred.
 
   Sizing falls out of the grid instead of being chosen: the type is a row
   high (`100cqh/7`), and since this face is 9x16 with ascent and descent
