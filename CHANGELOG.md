@@ -7,6 +7,24 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **A nudge when the tape stops between files.** On a tape with more than one
+  file, the machine reads the first and goes back to the prompt, where it will
+  sit until told what to do. The readout now says so rather than leaving the
+  deck looking stalled.
+
+  It is inferred from the transport, not read off the screen -- the machine
+  has no text buffer, its display going from video RAM straight to pixels in
+  rows that are terminated rather than fixed width -- so the test is how long
+  the motor has been still. Loading Pacman's three files, the gaps between
+  blocks measured 0.18s, 2.70s and 3.72s while the real stop at the prompt
+  ran 69s, so the line waits 6s. A first attempt at 3s fired during that
+  3.72s block gap and told the user to type something while the tape was
+  still running.
+
+  It does not say which command, because the deck cannot know: a plain
+  multi-file tape wants `LOAD ""` again, while a tape fronted by a loader --
+  Pacman is one -- wants `RUN` and then fetches the rest itself.
+
 - **"Please wait." while the motor is stopped mid-load.** A load is not one
   continuous run of tape: the ROM stops the motor between blocks while it
   digests what it has just read, and on a long program that pause is easily

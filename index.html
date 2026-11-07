@@ -689,6 +689,19 @@ const twNote  = document.getElementById('twnote');
 // Nineteen cells plus its two brackets is twenty-one characters, the full
 // width of the grid -- the same span as the rules above and below it.
 const TW_CELLS = 19;
+
+// How long the motor must stay stopped before the deck decides the machine
+// is back at the prompt rather than merely between blocks.
+//
+// Measured, loading Pacman's three files: the gaps between blocks came out
+// at 0.18s, 2.70s and 3.72s, while the real stop at the prompt -- the
+// loader read in, waiting to be RUN -- ran 69s, as long as it takes someone
+// to notice. The two populations are far apart but the short one reaches
+// further than it looks: an earlier 3s threshold fired during a 3.72s block
+// gap and told the user to type something while the tape was still going,
+// and the tape started again 0.7s later. 6s clears the longest gap seen by
+// a comfortable margin and still answers before anyone has given up.
+const TW_SETTLE = 6000;
 function twProgress(frac) {
   if (frac === null) { twBar.textContent = ''; return; }
   const lit = Math.max(0, Math.min(TW_CELLS, Math.round(frac * TW_CELLS)));
@@ -756,10 +769,12 @@ deck.fileEl.addEventListener('change', async () => {
 
 function doPlay() {
   deck.engaged = true; deck.waiting = undefined;
+  deck.stoppedAt = undefined; deck.promptShown = false;
   sys.machine.loadTape(deck.bytes); deckHint('Playing.');
 }
 function doRewind() {
   deck.engaged = true; deck.waiting = undefined;
+  deck.stoppedAt = undefined; deck.promptShown = false;
   sys.machine.loadTape(deck.bytes);
   deckHint('Rewound; playing from the start.');
 }
@@ -826,6 +841,37 @@ function drawDeck() {
     } else if (waiting !== deck.waiting) {
       deck.waiting = waiting;
       deckHint(waiting ? 'Please wait.' : 'Playing.');
+    }
+
+    // Stopped for a good while with tape still to come, on a tape that has
+    // more than one file on it: the machine has finished a file and gone
+    // back to the prompt, and it will sit there until it is told what to do
+    // next. Nobody is coming to tell them that, so the readout does.
+    //
+    // It does not say which command, because the deck cannot know. A plain
+    // multi-file tape wants LOAD "" again; a tape fronted by a loader, which
+    // is most of them, wants RUN and then fetches the rest itself. Pacman is
+    // the second kind, and an earlier version of this line confidently told
+    // the user to type the wrong one.
+    //
+    // This infers the prompt from the transport rather than seeing it. The
+    // machine has no text buffer to read -- the screen goes from video RAM
+    // straight to pixels, in rows that are terminated rather than fixed
+    // width -- so there is nothing to check for a cursor without
+    // reimplementing the display. The threshold is what separates the two
+    // kinds of stillness: a measured load of tycoon.bas pauses 1.7s between
+    // blocks, so TW_SETTLE sits well clear of that. A single-file tape
+    // cannot reach here, because `played` goes true and the hint clears.
+    if (waiting && deck.parts.length > 1) {
+      if (deck.stoppedAt === undefined) {
+        deck.stoppedAt = performance.now();
+      } else if (!deck.promptShown && performance.now() - deck.stoppedAt > TW_SETTLE) {
+        deck.promptShown = true;
+        deckHint('Waiting. Type  RUN  or  LOAD ""  for the next part.');
+      }
+    } else {
+      deck.stoppedAt = undefined;
+      deck.promptShown = false;
     }
   }
   // `played`, not `finished`: the ROM stops the motor on the last block and
