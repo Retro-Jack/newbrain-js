@@ -200,6 +200,78 @@ def _flatten_halo(img, cx, cy, r_from=100, r_to=170):
     img[y0:y1, x0:x1, :3] = sub - prof[:, :, None] * share
 
 
+# The back wall, inside the bay's own ledges. Everything in here is the flat
+# moulding behind the mechanism; the raised panel, the spindles and the head
+# carriage sit on it and are carried along rather than levelled.
+BACK_WALL = (478, 300, 1122, 548)
+
+
+def flatten_back_wall(img, target=None):
+    """Even out the lighting across the back wall.
+
+    Measured before this ran, the wall swung from 34 to 49 across the bay --
+    a broad hump, brightest down the middle, which is how the photograph was
+    lit rather than anything the moulding does. It reads as a stain once the
+    spindles no longer sit in the bright part.
+
+    The level is taken on a coarse grid, robustly: in each cell the median
+    and its deviation decide which pixels are wall, and only those count, so
+    the panel and the heads do not drag their cells. Cells with too little
+    wall in them borrow from their neighbours. That grid is smoothed, scaled
+    up and subtracted as a difference from the target, so features move with
+    the wall under them and keep their own contrast -- subtracting a blur of
+    the region itself would instead carve a halo round everything.
+    """
+    x0, y0, x1, y1 = BACK_WALL
+    sub = img[y0:y1, x0:x1, :3]
+    h, w = sub.shape[:2]
+    lum = sub.mean(2)
+
+    # What counts as wall is decided once, over the whole region. Deciding it
+    # per cell does not work: in a cell mostly covered by a spindle the
+    # majority level IS the spindle, so the cell reports the feature's
+    # brightness and the wall gets levelled to it. That put a cell at 12.9
+    # against a wall of 40.
+    gmed = np.median(lum)
+    gmad = np.median(np.abs(lum - gmed)) or 1.0
+    is_wall = np.abs(lum - gmed) < 2.0 * 1.4826 * gmad
+
+    GX, GY = 16, 7
+    grid = np.full((GY, GX), np.nan)
+    for gy in range(GY):
+        for gx in range(GX):
+            sl = (slice(gy * h // GY, (gy + 1) * h // GY),
+                  slice(gx * w // GX, (gx + 1) * w // GX))
+            cell, mask = lum[sl], is_wall[sl]
+            if mask.sum() > mask.size * 0.25:
+                grid[gy, gx] = cell[mask].mean()
+
+    # fill any cell that was mostly feature, from the cells that were not
+    ys, xs = np.nonzero(~np.isnan(grid))
+    for gy in range(GY):
+        for gx in range(GX):
+            if np.isnan(grid[gy, gx]):
+                d = np.hypot(xs - gx, ys - gy)
+                grid[gy, gx] = grid[ys[d.argmin()], xs[d.argmin()]]
+
+    g = Image.fromarray(grid.astype(np.float32), mode="F")
+    g = g.resize((w, h), Image.BICUBIC)
+    field = np.asarray(g).astype(np.float64)
+
+    if target is None:
+        target = float(np.nanmean(grid))
+    share = sub.reshape(-1, 3).mean(0)
+    share = share / max(share.mean(), 1e-6)
+
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float64)
+    edge = np.minimum.reduce([xx, yy, w - 1 - xx, h - 1 - yy])
+    m = np.clip(edge / 28.0, 0, 1)[:, :, None]
+
+    img[y0:y1, x0:x1, :3] = sub - (field - target)[:, :, None] * share * m
+    print("  back wall levelled to %.1f (was %.1f to %.1f across the bay)"
+          % (target, np.nanmin(grid), np.nanmax(grid)))
+
+
 def move_spindles(rgb):
     """Shift each spindle onto the hub it would actually drive."""
     out = rgb.copy()
@@ -226,6 +298,7 @@ _src = np.asarray(Image.open(SRC).convert("RGB")).astype(np.float64)
 if _src.shape[:2] != (MH, MW):
     sys.exit("expected a %dx%d source, got %dx%d" % (MW, MH, _src.shape[1], _src.shape[0]))
 _src = move_spindles(_src)
+flatten_back_wall(_src)
 for (sx_, sy_), (hx_, hy_) in zip(SPINDLES, HUBS):
     print("  spindle (%d,%d) -> hub (%d,%d)   moved %+d,%+d"
           % (sx_, sy_, hx_, hy_, hx_ - sx_, hy_ - sy_))

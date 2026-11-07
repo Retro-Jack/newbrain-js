@@ -96,6 +96,15 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   No boundary left for an arc to form on: the dome across r=45 to r=125 falls
   from 3.0 and 4.7 levels to 1.3 and 1.8, under the wall's own grain.
 
+  The back wall is then levelled as a whole. It swung from 34 to 49 across
+  the bay -- a broad hump, brightest down the middle, which is how the
+  photograph was lit rather than anything the moulding does, and it reads as
+  a stain once the spindles no longer sit in the bright part. The level is
+  taken on a coarse grid and subtracted as a difference from the mean, so
+  the panel, the spindles and the head carriage move with the wall under
+  them and keep their own contrast. Cell spread falls from 15.3 to 6.8,
+  against a grain of 4.1.
+
 ### Changed
 - The top line steps when it scrolls, a character at a time, rather than
   gliding. A real readout shifts its buffer by a cell; it has no way to move
