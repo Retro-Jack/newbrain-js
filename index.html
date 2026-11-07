@@ -70,6 +70,17 @@
      CSS. No hole is cut for it: unlike the little cassette this replaces,
      these reel hubs are opaque, and each sprite frame is a crop of the same
      photograph, so its border pixels already match what is underneath. */
+  /* With nothing in the deck you see the bay itself -- spindles, heads,
+     capstan, pinch roller. It is a second photograph of the same machine,
+     laid over the first and revealed when the deck is empty, rather than a
+     swap of the src: both are then in the document from the start, so the
+     bay does not arrive a frame late the first time a tape is ejected.
+     The reels go with it. They are part of the cassette, not the deck, so
+     there is nothing for them to be drawn on. */
+  #tapedeck img.bare { position:absolute; left:0; top:0; width:100%; opacity:0; }
+  #tapedeck.empty img.bare { opacity:1; }
+  #tapedeck.empty i { display:none; }
+
   #tapedeck i {
     position:absolute; display:block;
     background:url(art/deck-reels.webp) 0 0/100% 3700% no-repeat;
@@ -279,7 +290,7 @@
 </head>
 <body>
 <div id="stage">
-  <div id="tapedeck" title="Cassette deck"><img src="art/deck.webp" alt=""><i></i>
+  <div id="tapedeck" class="empty" title="Cassette deck"><img src="art/deck.webp" alt=""><img class="bare" src="art/deck-empty.webp" alt=""><i></i>
     <span class="key" data-key="eject" title="Insert a tape, or eject the one in the deck"></span>
     <span class="key" data-key="next"  title="Add the next part of a multi-part tape"></span>
     <span class="key" data-key="rew"   title="Rewind"></span>
@@ -687,6 +698,7 @@ function twProgress(frac) {
 function tapeWindow() {
   const n = deck.parts.length;
   document.getElementById('tapewin').classList.toggle('notape', !n);
+  deck.deckEl.classList.toggle('empty', !n);
   const name = n ? deck.name : 'No tape.';
   // A tape in the deck shows an empty trough; an empty deck shows nothing.
   twProgress(n ? (sys.machine.tape ? sys.machine.tape.progress : 0) : null);

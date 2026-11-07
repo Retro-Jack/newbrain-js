@@ -6,6 +6,33 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- **The deck shows its bay when there is no tape in it** -- spindles, heads,
+  capstan and pinch roller, instead of a cassette that is not there. It is a
+  second photograph of the same machine, laid over the first and revealed
+  when the deck is empty rather than swapped in as a `src`, so both are in
+  the document from the start and the bay does not arrive a frame late the
+  first time a tape is ejected. The reels go with it: they belong to the
+  cassette, not the deck, so there is nothing for them to be drawn on.
+
+  It follows the same count the readout does, so the picture and the words
+  cannot disagree about whether a tape is in.
+
+  `art/make-deck-empty.py` builds it, and the awkward part is colour, not
+  collage: the render is still the original purple while the shipped deck has
+  been graded to a warm near-monochrome. The grade is measured rather than
+  guessed -- the bay's own frame appears in both images untouched, so binning
+  the render's luminance against the shipped deck's channels over that frame
+  recovers it as three curves. A strip of frame is held out of the fit and
+  the residual printed, so drift shows up as a number.
+
+  Two things in there not to undo. The bay is composited into `deck.webp`
+  rather than re-exported from the master, because `deck.webp` is that master
+  downscaled and then embossed with the transport symbols -- re-exporting
+  drops them. And the render's spindles sit wider apart than the cassette's
+  hubs, so they are moved onto them, the wells they leave behind rebuilt from
+  a surface fitted to the surrounding wall plus its own grain.
+
 ### Changed
 - The top line steps when it scrolls, a character at a time, rather than
   gliding. A real readout shifts its buffer by a cell; it has no way to move
