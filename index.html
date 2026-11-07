@@ -736,9 +736,10 @@ function tapeWindow() {
   deck.deckEl.classList.toggle('empty', !n);
   // Not just the state but the remedy: the eject button is how a tape gets
   // in, and that is only discoverable from a tooltip, which is a hover away
-  // and no use at all on a phone. Twenty-one characters, so it fits the
-  // readout's grid exactly without scrolling.
-  const name = n ? deck.name : 'No tape. Press eject.';
+  // and no use at all on a phone. Too long for the readout's twenty-one
+  // columns, so it scrolls -- twFit handles that for the tape's name
+  // already, and this goes through the same path.
+  const name = n ? deck.name : 'No tape - Press eject to insert one.';
   // A tape in the deck shows an empty trough; an empty deck shows nothing.
   twProgress(n ? (sys.machine.tape ? sys.machine.tape.progress : 0) : null);
   // One sentence across two rows, so the count line takes the comma and the
