@@ -22,12 +22,12 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   starts and ends on the same column. The bar carries nineteen cells
   between its brackets to do it, up from eighteen.
 
-  Lines are centred by whole columns, in code, rather than by `text-align`.
-  Centring text puts an odd-length line half a cell off an even-length one,
-  and that is what went wrong first time: the twenty-one character count
-  line sat half a character to the left of the twenty-character bar and
-  rules above it. There is no half a character on a character display, so
-  each line is padded to its column and the block is what gets centred.
+  What made the count line sit half a character to the left of the bar and
+  the rules was not the centring: the count ran the full twenty-one columns
+  while they ran twenty, and any two lines of unequal parity centre half a
+  cell apart. Widening the rules and the bar to the grid fixes it at the
+  source -- all three now start on column 0 and end on column 21 whatever
+  centres them -- and leaves the short lines free to be centred properly.
 
   The grid is centred on its ink, not on its cells. Seven rows fill the
   window exactly, so the cells are flush to both edges -- but the ink inside

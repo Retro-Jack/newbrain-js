@@ -137,15 +137,25 @@
      line the readout can show, "NN files on the tape," with a two-digit
      count. The rules and the progress bar are twenty-one wide too, so every
      full-width line ends on the same column. */
-  /* Each line is a twenty-one column block, centred in the window as a
-     block -- never by text-align. Centring text puts an odd-length line
-     half a cell off an even-length one, which is exactly how the count line
-     came to sit half a character left of the bar and the rules above it.
-     The lines are centred in JS instead, by whole columns, which is the only
-     kind of centring a character display has. white-space:pre above is what
-     keeps those leading spaces from being collapsed away. */
+  /* Each line is a twenty-one column block, centred in the window, with the
+     text centred inside it.
+
+     What made the count line sit half a character left of the bar and the
+     rules was not the centring: it was that the count ran the full
+     twenty-one columns while they ran twenty. Any two lines of unequal
+     parity centre half a cell apart. With all three the width of the grid
+     they share an offset of zero, so they start on column 0 and end on
+     column 21 whatever centres them.
+
+     That leaves the short lines free to be centred properly. Rounding them
+     to whole columns instead -- which an earlier pass did -- costs them half
+     a cell of accuracy to buy an alignment they have nothing to align with,
+     and "in that order." sat visibly left of the middle for it.
+
+     white-space:pre is still wanted: it keeps the double spaces in
+     "Type  LOAD ""  then press play." from collapsing. */
   #tapewin > * { font-size:calc(100cqh / 7); width:21ch; justify-self:center;
-                 position:relative; top:0.0692em; }
+                 text-align:center; position:relative; top:0.0692em; }
   /* That nudge centres the ink rather than the cells. Seven rows fill the
      window exactly, so the cell grid is flush to both edges -- but the ink
      inside the cells is not centred in them. Measured across the printable
@@ -550,13 +560,6 @@ const deck = {
 
 const TW_GAP = '\u00a0\u00a0\u00a0\u00b7\u00a0\u00a0\u00a0';
 
-// The readout is twenty-one columns wide, and a line is centred in it by
-// whole columns -- there is no half a character on a character display. An
-// odd gap is spent on the right, the way a typewriter would. Anything too
-// long to fit comes back unchanged and is left to scroll.
-const TW_COLS = 21;
-const twCentre = (t) => ' '.repeat(Math.max(0, (TW_COLS - t.length) >> 1)) + t;
-
 // A line of the readout, scrolled only when it will not fit.
 //
 // The separator goes on the end of BOTH copies, not between them. Written as
@@ -566,13 +569,13 @@ const twCentre = (t) => ' '.repeat(Math.max(0, (TW_COLS - t.length) >> 1)) + t;
 // identical, -50% is exactly one period, and the loop closes.
 function twFit(box, text) {
   const span = box.firstElementChild;
-  span.textContent = twCentre(text);
+  span.textContent = text;
   box.classList.remove('scroll');
   span.style.animationDuration = '';
   if (!text) return;
   requestAnimationFrame(() => {
     if (span.scrollWidth - box.clientWidth <= 1) return;
-    span.textContent = (text + TW_GAP).repeat(2);   // scrolling: no padding
+    span.textContent = (text + TW_GAP).repeat(2);
     box.classList.add('scroll');
     // A steady reading pace whatever the length: one pass takes as long as
     // the text is wide.
@@ -670,9 +673,9 @@ function tapeWindow() {
   // One sentence across two rows, so the count line takes the comma and the
   // note finishes it. With a single file there is no note to finish it, so
   // the comma would be left dangling -- that line ends in a stop instead.
-  twCount.textContent = n ? twCentre(`${n} file${n === 1 ? '' : 's'} on the tape${n > 1 ? ',' : '.'}`) : '';
+  twCount.textContent = n ? `${n} file${n === 1 ? '' : 's'} on the tape${n > 1 ? ',' : '.'}` : '';
   // Order only means something when there is more than one.
-  twNote.textContent  = n > 1 ? twCentre('in that order.') : '';
+  twNote.textContent  = n > 1 ? 'in that order.' : '';
 
   twFit(twName, name);
 }
