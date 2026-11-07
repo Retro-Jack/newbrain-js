@@ -32,12 +32,21 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   multi-file tape wants `LOAD ""` again, while a tape fronted by a loader --
   Pacman is one -- wants `RUN` and then fetches the rest itself.
 
-- **"No tape." now says what to do about it** -- "No tape - Press eject to
-  insert one." The eject button is how a tape gets in, and that was only
-  discoverable from a tooltip, which is a hover away and no use at all on a
-  phone. At thirty-six characters it is too long for the readout's twenty-one
-  columns, so it scrolls, a character at a time, through the same path the
-  tape's own name uses.
+- **"No tape" now says what to do about it**, across two lines with a blank
+  between them:
+
+  ```
+          No tape
+
+   Press eject to insert
+  ```
+
+  The eject button is how a tape gets in, and that was only discoverable
+  from a tooltip, which is a hover away and no use at all on a phone. The
+  second line borrows the count's row, moved from six to five so the pair
+  straddles the middle row and the block stays centred. "Press eject to
+  insert" is exactly twenty-one characters, so it fills the grid without
+  having to scroll.
 
 - **"Please wait." while the motor is stopped mid-load.** A load is not one
   continuous run of tape: the ROM stops the motor between blocks while it

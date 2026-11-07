@@ -223,10 +223,15 @@
   /* With no tape there is no name, no bar and no count, so the rule would be
      a line ruled across an empty readout. */
   #tapewin.notape #twrule { display:none; }
-  /* "No tape." is the only line showing, so it drops from the name's row to
-     row four, the middle one of the seven. It shares that cell with the
-     progress bar, which has nothing in it while the deck is empty. */
-  #tapewin.notape #twname { grid-row:4; }
+  /* With no tape there are two lines to place, and they sit either side of
+     the middle row rather than on it: the name's row moves from three to
+     three (it is already there) and the count comes up from six to five, so
+     the pair spans rows three to five and centres on row four with a blank
+     line between them. Rows four, six and seven are empty -- the bar, the
+     count's own row and the note have nothing to say while the deck is
+     empty. */
+  #tapewin.notape #twname  { grid-row:3; }
+  #tapewin.notape #twcount { grid-row:5; }
   @media (prefers-reduced-motion: reduce) {
     #twname.scroll span, #twhint.scroll span { animation:none; }
   }
@@ -736,16 +741,17 @@ function tapeWindow() {
   deck.deckEl.classList.toggle('empty', !n);
   // Not just the state but the remedy: the eject button is how a tape gets
   // in, and that is only discoverable from a tooltip, which is a hover away
-  // and no use at all on a phone. Too long for the readout's twenty-one
-  // columns, so it scrolls -- twFit handles that for the tape's name
-  // already, and this goes through the same path.
-  const name = n ? deck.name : 'No tape - Press eject to insert one.';
+  // and no use at all on a phone. It is said across two lines, the second
+  // of which borrows the count's row -- "Press eject to insert" is exactly
+  // twenty-one characters, so it fills the grid without scrolling.
+  const name = n ? deck.name : 'No tape';
   // A tape in the deck shows an empty trough; an empty deck shows nothing.
   twProgress(n ? (sys.machine.tape ? sys.machine.tape.progress : 0) : null);
   // One sentence across two rows, so the count line takes the comma and the
   // note finishes it. With a single file there is no note to finish it, so
   // the comma would be left dangling -- that line ends in a stop instead.
-  twCount.textContent = n ? `${n} file${n === 1 ? '' : 's'} on the tape${n > 1 ? ',' : '.'}` : '';
+  twCount.textContent = n ? `${n} file${n === 1 ? '' : 's'} on the tape${n > 1 ? ',' : '.'}`
+                          : 'Press eject to insert';
   // Order only means something when there is more than one.
   twNote.textContent  = n > 1 ? 'in that order.' : '';
 
