@@ -45,9 +45,11 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and an inline-block sits on the baseline, which would stand their content
   a quarter of a row proud of a cell that cannot grow to take it.
 
-  One consequence worth knowing: with no tape in the deck, "No tape." sits
-  on the name's row, which is row three of seven and so one row above the
-  middle. A fixed grid does not re-centre what is left.
+  A fixed grid does not re-centre what is left on it, so with no tape in the
+  deck "No tape." would sit on the name's row -- row three of seven, one row
+  above the middle. In that one state it drops to row four instead, sharing
+  the cell with a progress bar that has nothing in it while the deck is
+  empty, and lands dead centre.
 
 - The readout's messages are in sentence case and punctuated, as are the
   status line, the button tooltips and the link beside them. The file count
