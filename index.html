@@ -755,10 +755,12 @@ deck.fileEl.addEventListener('change', async () => {
 });
 
 function doPlay() {
-  deck.engaged = true; sys.machine.loadTape(deck.bytes); deckHint('Playing.');
+  deck.engaged = true; deck.waiting = undefined;
+  sys.machine.loadTape(deck.bytes); deckHint('Playing.');
 }
 function doRewind() {
-  deck.engaged = true; sys.machine.loadTape(deck.bytes);
+  deck.engaged = true; deck.waiting = undefined;
+  sys.machine.loadTape(deck.bytes);
   deckHint('Rewound; playing from the start.');
 }
 function doEject() {
@@ -807,6 +809,25 @@ function drawDeck() {
   if (can.rec !== sys.machine.hasRecording) deckState();
   if (!tape) return;
   twProgress(tape.progress);
+
+  // A load is not one continuous run of tape. The ROM stops the motor between
+  // blocks while it digests what it just read, and on a long program that
+  // pause is easily long enough to look like something has gone wrong. Saying
+  // so is the whole point of the line.
+  //
+  // Only transitions are announced, and the first reading is adopted in
+  // silence, so this cannot talk over the hint whoever pressed the button
+  // just set -- "Rewound; playing from the start." survives until the motor
+  // actually changes state.
+  if (deck.engaged && !tape.played) {
+    const waiting = !sys.machine.motor;
+    if (deck.waiting === undefined) {
+      deck.waiting = waiting;
+    } else if (waiting !== deck.waiting) {
+      deck.waiting = waiting;
+      deckHint(waiting ? 'Please wait.' : 'Playing.');
+    }
+  }
   // `played`, not `finished`: the ROM stops the motor on the last block and
   // never runs out the gap tone behind it, so the signal never ends on its own.
   // Once the data has gone past there is nothing left to say, so the status

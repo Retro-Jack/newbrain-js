@@ -7,6 +7,17 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- **"Please wait." while the motor is stopped mid-load.** A load is not one
+  continuous run of tape: the ROM stops the motor between blocks while it
+  digests what it has just read, and on a long program that pause is easily
+  long enough to look like something has gone wrong. Measured on a real load
+  of `tycoon.bas`, the first one lasts 1.7 seconds and arrives 6% in. The
+  readout now says so, and goes back to "Playing." when the tape moves again.
+
+  Only transitions are announced and the first reading is adopted in silence,
+  so this cannot talk over the hint the button press just set -- "Rewound;
+  playing from the start." survives until the motor actually changes state.
+
 - **The deck shows its bay when there is no tape in it** -- spindles, heads,
   capstan and pinch roller, instead of a cassette that is not there. It is a
   second photograph of the same machine, laid over the first and revealed
