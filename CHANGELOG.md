@@ -64,6 +64,13 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the cell with a progress bar that has nothing in it while the deck is
   empty, and lands dead centre.
 
+  Sharing a cell means naming the column. An item with an explicit row but
+  an automatic column is not stacked, it is placed in the next free column,
+  so the two lines on row four quietly made the grid two columns and twice
+  the window wide -- and every line in that state sat flush against the left
+  edge rather than centred. Both axes are pinned now, and the column track
+  is declared rather than left implicit.
+
 - The readout's messages are in sentence case and punctuated, as are the
   status line, the button tooltips and the link beside them. The file count
   and the note below it are now one sentence across two rows -- "20 files on
