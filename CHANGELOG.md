@@ -420,6 +420,20 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   started. Respects `prefers-reduced-motion`.
 
 ### Fixed
+
+- **A pressed key no longer strands a dark line beside it.** The keys touch --
+  at the top of the row the whole six are one unbroken opaque run in the
+  photograph -- so what looks like a gap between two of them is the dark
+  crevice they cast, belonging to neither. Cutting each sprite at a boundary
+  split that crevice in half, and when one key sank its neighbour redrew its
+  own half at full height: a dark line standing beside a key that was no
+  longer there.
+
+  Each sprite now reaches to the next key's edge, so it carries the whole
+  crevice on either side of it, and a pressed key paints above its neighbours
+  so the crevice sinks with it. The deck's holes are unchanged -- they already
+  ran as one span across the row -- so deck.webp is byte-identical and only the
+  sprites moved.
 - `tools/detokenise.py` reversed the whole block stream instead of each
   block's payload. Output looked right line for line but spliced every line
   that straddled a block boundary, which invented 216 "damaged lines" across
