@@ -144,6 +144,21 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **The deck's keys no longer carry a page background with them.** A pressed
+  key sits 15px lower and the gap it leaves has to hide the un-pressed key
+  underneath, so it cannot simply be transparent -- that was the reasoning that
+  led to flattening the sprites onto the stage colour. What it actually did was
+  tie them to ONE page: every sprite was fully opaque with its top rows at
+  rgb(11,13,17), this stage's background. On the dark stage here it passed. On
+  any lighter page each pressed key grew a black rectangle floating above the
+  deck, which is exactly what it did once these shipped to GenX-DOS and its
+  wallpaper.
+
+  The gap now carries the deck's own pixels in shadow, with the deck's own
+  alpha -- transparent exactly where the deck is transparent, and reading as
+  the key sunk into its recess everywhere else. Checked on both backgrounds
+  before and after, and on the deployed page with all six keys held down.
+
 - **The VF panel speaks its own character set, not ASCII.** The manual: "The vf
   display character set consists of the 64 ASCII upper case characters,
   excepting character 95 for which the £ sign is substituted, and 64 graphics

@@ -97,10 +97,17 @@
   /* The deck's own keys. Each is a hit area that carries the picture of that
      key pressed, shown by raising its opacity -- so one small image per key
      rather than a second copy of the whole deck, which is 9KB against 771KB.
-     They have to be OPAQUE, and are flattened onto the stage colour when
-     they are cut: a pressed key sits 15px lower, and the gap it leaves at
-     the top has to HIDE the un-pressed key underneath. Transparency there
-     would simply let it show through. */
+
+     A pressed key sits 15px lower, and the gap it leaves at the top has to
+     hide the un-pressed key underneath, so it cannot simply be transparent.
+     It used to be flattened onto the stage colour, which tied the sprite to
+     ONE page background: on the dark stage here it passed, and anywhere
+     lighter it was a black rectangle floating above the deck.
+
+     The gap now carries the deck's own pixels in shadow, with the deck's own
+     alpha -- so it reads as the key sunk into its recess, it is transparent
+     exactly where the deck is transparent, and it composites correctly on any
+     background. */
   #tapedeck .key {
     position:absolute; z-index:3; cursor:pointer;
     background-size:100% 100%; background-repeat:no-repeat;
