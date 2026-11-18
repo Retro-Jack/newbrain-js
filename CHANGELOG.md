@@ -107,6 +107,37 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **The VF panel speaks its own character set, not ASCII.** The manual: "The vf
+  display character set consists of the 64 ASCII upper case characters,
+  excepting character 95 for which the £ sign is substituted, and 64 graphics
+  characters." So 20-5F is text, 60-7F is graphics, and there is no lower case
+  on this display at all. Passing the whole printable range through as ASCII
+  drew the graphics codes as letters -- which is where the stray `h` came from,
+  once latching made the live line visible. It was never a cursor artefact.
+
+  Bit 7 is the cursor rather than data -- "the COP actually sets the cursor at
+  any character which has bit 7 set" -- and is masked off, so a cursor shows as
+  whatever character it sits on.
+
+  The graphics half is left dark on purpose. Drawing invented glyphs would be
+  worse than an empty cell.
+
+- **The pound sign, which had been subsetted out by mistake.** Character 95 is
+  a £ on this display, and the shipped font could not draw one. The font was
+  not the problem: Segment16C covers cp1252 and has U+00A3 -- the 96-codepoint
+  subset here had simply dropped it. Re-subsetted from the CC0 TTF to 97
+  codepoints and regenerated, 3768 -> 3808 bytes for the woff.
+
+  Checked the way this font has to be checked: fontTools accepting a woff says
+  nothing, because Chrome validates through OTS and has rejected a
+  valid-looking build of this very font before. Loaded in Chrome, £ draws with
+  ink distinct both from `A` and from the .notdef box -- a box reports ink too,
+  so matching against a codepoint the font certainly lacks is the test that
+  means anything.
+
+  The licence invites it: CC0, "no rights reserved", "you are free to try
+  fixing whatever issues you may find".
+
 - **The VF panel latches on the transfer, instead of mirroring RAM.** Messages
   were flashing past unreadably -- measured over a boot, `NEWBRAIN B` held for
   22ms on its way to a banner it never finished, and `READY` for 25ms. The

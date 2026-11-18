@@ -15,9 +15,13 @@
   @font-face {
     font-family:'Segment16C';
     /* Segment16C by Daniel Wikholm, CC0 public domain. Subsetted here to
-       printable ASCII plus U+2588, and converted from the CC0 TTF — the woff
-       that shipped alongside it was a third-party conversion Chrome rejects
-       outright ("Invalid font data"), despite a valid wOFF header. */
+       printable ASCII, U+2588 and U+00A3, and converted from the CC0 TTF — the
+       woff that shipped alongside it was a third-party conversion Chrome
+       rejects outright ("Invalid font data"), despite a valid wOFF header.
+       U+00A3 is here because the VF panel substitutes a pound sign for
+       character 95; the full font covers cp1252, so it only needed admitting
+       to the subset rather than drawing. CC0 means the font may be modified
+       freely — "you are free to try fixing whatever issues you may find". */
     src:url('art/fonts/Segment16C-Regular.woff2') format('woff2'),
         url('art/fonts/Segment16C-Regular.woff')  format('woff');
     font-display:block;

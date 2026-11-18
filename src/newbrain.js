@@ -455,11 +455,30 @@ export class NewBrain {
   //
   // OUTBUFF is filled right-to-left: the ROM pushes characters in from the
   // right-hand end of the panel, so the buffer reads back reversed.
+  //
+  // The panel is NOT an ASCII device. The manual: "The vf display character set
+  // consists of the 64 ASCII upper case characters, excepting character 95 for
+  // which the £ sign is substituted, and 64 graphics characters." So 20-5F is
+  // text and 60-7F is graphics -- there is no lower case on this display, and
+  // treating the whole range as ASCII drew the graphics codes as letters. A
+  // cursor sitting on a blank cell arrives as A0 and came out as the letter h.
+  //
+  // Bit 7 is the cursor, not data: "the COP actually sets the cursor at any
+  // character which has bit 7 set". Masked off here, so a cursor shows as
+  // whatever character it sits on.
+  //
+  // The graphics half is deliberately not drawn. Segment16C has no glyphs for
+  // it, and inventing them would be worse than leaving the cell dark.
+  //
+  // Character 95 is the one substitution: where ASCII has an underscore this
+  // display has a pound sign. The font does carry it -- Segment16C covers
+  // cp1252 -- it had simply been subsetted out of the copy shipped here.
   vfdText() {
     let s = '';
     for (let i = NewBrain.VFD_COLS - 1; i >= 0; i--) {
-      const b = this.vfdLatch[i] & 0x7f;
-      s += (b >= 32 && b < 127) ? String.fromCharCode(b) : ' ';
+      const b = this.vfdLatch[i] & 0x7f;      // bit 7 is the cursor flag
+      if (b < 0x20 || b > 0x5f) { s += ' '; continue; }   // 60-7F is graphics
+      s += (b === 0x5f) ? '\u00a3' : String.fromCharCode(b);
     }
     return s;
   }
