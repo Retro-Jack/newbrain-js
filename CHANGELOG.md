@@ -106,6 +106,32 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   against a grain of 4.1.
 
 ### Changed
+
+- **The readout was dim because the strokes never filled a pixel.** Not the
+  colour, and not the tube behind it. The panel draws at 151x13 -- 9.44px per
+  character -- and at that size Segment16C's strokes are thinner than one
+  pixel, so canvas anti-aliasing spread each one over two pixels at partial
+  coverage. Measured on the live canvas: peak alpha 209 of 255, with only 157
+  pixels of the whole panel above 0.6 alpha. The glyphs were all edge and no
+  core, which is exactly why tuning the lit colour never helped -- it was only
+  ever being laid down at a fraction of its strength.
+
+  Each glyph is now drawn twice with a 0.2px stroke, which widens a sub-pixel
+  stroke toward a whole one and lets the passes accumulate into a solid core.
+  Peak alpha 209 -> 254, and total ink -- summed alpha over the panel, which is
+  the one measure here that rises monotonically with weight -- goes 415 -> 765.
+
+  That is deliberately half of what the technique can give. A 0.6px stroke
+  reaches 1049 and is legibly brighter still, but at 9.44px per character it
+  starts thickening toward blobs. Mean luminance of the lit pixels is a trap as
+  a tuning metric and was discarded: it is non-monotonic, because a heavier
+  stroke drags more dim edge pixels into the sample and the average falls while
+  the panel genuinely gets brighter.
+
+  Rendering the canvas larger and scaling it down does not work, and was
+  measured rather than assumed: supersampling x4 came out slightly *worse*
+  than doing nothing. Downscaling redistributes coverage, it cannot add any.
+  Two knobs, `VFD_PASSES` and `VFD_STROKE`.
 - **The readout names the file going past, not the whole tape.** It used to
   join every part with " + ", which for Pacman is thirty-eight characters
   against twenty-one columns -- so the name scrolled, and a name that is
