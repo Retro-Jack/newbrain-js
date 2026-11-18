@@ -35,6 +35,15 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   duration of a paste so a still-held modifier cannot land in the middle of it,
   and the matrix is cleared before typing starts. CONTROL alone still reaches
   the machine, because on its own that is simply a key the user pressed.
+
+  ▲ **Keeping V off the matrix must not call `preventDefault`.** The browser's
+  default action for that keystroke IS the paste, so suppressing it kills the
+  event the handler exists to serve -- Ctrl+V then did nothing at all.
+  Returning early is enough. Nor can this be tested with a synthetic
+  `ClipboardEvent`: a dispatched event never travels the default-action path,
+  so it passes happily while the real shortcut is dead. It takes a real
+  clipboard and a real keypress.
+
 - **A nudge when the tape stops between files.** On a tape with more than one
   file, the machine reads the first and goes back to the prompt, where it will
   sit until told what to do. The readout now says so rather than leaving the

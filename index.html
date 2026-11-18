@@ -588,7 +588,11 @@ addEventListener('keydown', e => {
   // both real keys on this machine and CONTROL+V is a real editing command --
   // it turns the cursor into an underline and then walks it about the screen,
   // which is what Ctrl+V did here before the paste handler ever saw the event.
-  if ((e.ctrlKey || e.metaKey) && e.code === 'KeyV') { e.preventDefault(); return; }
+  // Return WITHOUT preventDefault: the browser's default action for this
+  // keystroke is the paste itself, so suppressing it kills the paste event
+  // this handler exists to let through. Returning early is enough -- V simply
+  // never reaches the matrix.
+  if ((e.ctrlKey || e.metaKey) && e.code === 'KeyV') return;
   // A paste is typing on the machine's behalf; a key the user is still holding
   // from the shortcut would land in the middle of it.
   if (pasting) { e.preventDefault(); return; }
