@@ -137,13 +137,15 @@
      sank, the key still drew the crevice at full height and left a dark band
      standing beside a key that was no longer there.
 
-     So it is its own element, and it is simply not there unless BOTH of its
-     keys are up. Done with :has() so it holds however .down gets set; where
-     :has() is missing the seams just stay put, which is the old behaviour
-     rather than a broken one. */
+     So it is its own element, and it SINKS whenever either of its keys does,
+     by the same drop as the key itself -- the shadow follows the key down
+     rather than standing at full height beside it. Done with :has() so it
+     holds however .down gets set; where :has() is missing the seams just stay
+     put, which is the old behaviour rather than a broken one. */
   #tapedeck .seam {
     position:absolute; z-index:0; pointer-events:none;
     background-size:100% 100%; background-repeat:no-repeat;
+    transition:transform .06s ease-out;
   }
   #tapedeck .seam[data-left=eject][data-right=next] { background-image:url(art/seam-eject-next.webp); }
   #tapedeck .seam[data-left=next][data-right=rew]   { background-image:url(art/seam-next-rew.webp); }
@@ -161,7 +163,9 @@
   #tapedeck:has(.key[data-key=ff].down)    .seam[data-left=ff],
   #tapedeck:has(.key[data-key=ff].down)    .seam[data-right=ff],
   #tapedeck:has(.key[data-key=rec].down)   .seam[data-left=rec],
-  #tapedeck:has(.key[data-key=rec].down)   .seam[data-right=rec] { opacity:0; }
+  #tapedeck:has(.key[data-key=rec].down)   .seam[data-right=rec] {
+    transform:translateY(var(--keydrop, 25%));
+  }
   #tapedeck .key.off  { cursor:default; }
   #tapedeck .key[data-key=eject] { background-image:url(art/key-eject.webp); }
   #tapedeck .key[data-key=next]  { background-image:url(art/key-next.webp); }

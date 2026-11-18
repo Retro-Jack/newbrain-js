@@ -429,9 +429,10 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   because the standing key still painted its own copy above where the sunk one
   landed.
 
-  It is now its own element, one per boundary, and it is simply not there
-  unless BOTH of its keys are up -- driven by :has(), so it holds however
-  .down gets set. At rest nothing has changed.
+  It is now its own element, one per boundary, and it SINKS whenever either of
+  its keys does, by the same drop as the key -- the shadow follows the key down
+  instead of standing at full height beside it. Driven by :has(), so it holds
+  however .down gets set. At rest nothing has changed.
 
 - **A pressed key no longer strands a dark line beside it.** The keys touch --
   at the top of the row the whole six are one unbroken opaque run in the
