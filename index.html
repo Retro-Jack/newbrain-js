@@ -593,6 +593,91 @@ addEventListener('keyup', e => {
 // A tab switch can leave keys stuck down.
 addEventListener('blur', () => sys.machine.clearKeys());
 
+// ---- pasting from the host -------------------------------------------------
+// Typed on the machine's own matrix, one key at a time, exactly as a person
+// would. Nothing is injected into memory and nothing is hurried: the COP scans
+// the keyboard every 20ms, so a key has to be held long enough to be seen, and
+// a BASIC listing pasted in arrives at the speed the machine can take it.
+//
+// A character becomes a physical key plus a shift state. The NewBrain puts
+// several characters where a modern keyboard does not -- the apostrophe is on
+// 7, the double quote on 2, and the bracket keys give ( and ) unshifted -- so
+// this is a map of what the KEY produces on THIS machine, not what is printed
+// on the host's keycap.
+//
+// Anything not in the map is skipped rather than guessed. Typing the wrong
+// character into a listing is worse than dropping one, because it is silent.
+const PASTE_KEY = (() => {
+  const m = {};
+  const plain = (ch, code) => { m[ch] = [code, false]; };
+  const shift = (ch, code) => { m[ch] = [code, true]; };
+  for (let i = 0; i < 26; i++) {
+    const code = 'Key' + String.fromCharCode(65 + i);
+    plain(String.fromCharCode(97 + i), code);   // lower case unshifted
+    shift(String.fromCharCode(65 + i), code);   // upper case shifted
+  }
+  for (let d = 0; d <= 9; d++) plain(String(d), 'Digit' + d);
+  plain(' ', 'Space');
+  plain('\n', 'Enter');
+  plain(',', 'Comma');  plain('.', 'Period');
+  plain('/', 'Slash');  plain(';', 'Semicolon');
+  plain('-', 'Minus');  plain('=', 'Equal');
+  // the ones the machine moves: see systems/newbrain/controls.html
+  plain('(', 'BracketLeft');  shift('[', 'BracketLeft');
+  plain(')', 'BracketRight'); shift(']', 'BracketRight');
+  plain('+', 'Quote');        shift('^', 'Quote');
+  shift('\\', 'Minus');       shift('@', 'Equal');
+  shift('"', 'Digit2');       shift("'", 'Digit7');
+  shift('#', 'Digit3');
+  return m;
+})();
+
+// Hold and gap are in machine terms: the COP's scan is 20ms, so 60ms of hold
+// is three scans and cannot be missed. Shift closes over the keypress with a
+// margin at each end -- a short overlap is how a closing quote once came out
+// as a 2.
+const PASTE_HOLD = 60, PASTE_GAP = 60, PASTE_SHIFT_LEAD = 90;
+let pasting = false;
+
+async function pasteText(text) {
+  if (pasting) return;
+  pasting = true;
+  const SHIFT = KEYMAP.ShiftLeft;
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  let typed = 0, skipped = 0;
+  try {
+    for (const raw of text.replace(/\r\n?/g, '\n').replace(/\t/g, ' ')) {
+      if (!pasting) break;                       // cancelled
+      const hit = PASTE_KEY[raw];
+      if (!hit) { skipped++; continue; }
+      const [code, needShift] = hit;
+      const k = KEYMAP[code];
+      if (!k) { skipped++; continue; }
+      if (needShift) { sys.machine.setKey(SHIFT[0], SHIFT[1], true); await wait(PASTE_SHIFT_LEAD); }
+      sys.machine.setKey(k[0], k[1], true);
+      await wait(PASTE_HOLD);
+      sys.machine.setKey(k[0], k[1], false);
+      if (needShift) { await wait(PASTE_SHIFT_LEAD); sys.machine.setKey(SHIFT[0], SHIFT[1], false); }
+      await wait(PASTE_GAP);
+      typed++;
+    }
+  } finally {
+    sys.machine.clearKeys();
+    pasting = false;
+  }
+  return { typed, skipped };
+}
+
+addEventListener('paste', e => {
+  const text = e.clipboardData && e.clipboardData.getData('text');
+  if (!text) return;
+  e.preventDefault();
+  pasteText(text);
+});
+// Esc stops a long paste. It is also the machine's STOP key, which is the
+// right thing to be pressing if a paste is going somewhere unintended.
+addEventListener('keydown', e => { if (e.code === 'Escape') pasting = false; });
+
 // ---- cassette --------------------------------------------------------------
 // Nothing here touches the COP. The file is turned into a signal and played
 // into TPIN, and the machine's own microcode reads it, so the sequence is the

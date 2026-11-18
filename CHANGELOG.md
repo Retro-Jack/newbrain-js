@@ -7,6 +7,25 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+
+- **Paste from the host.** Ctrl+V types the clipboard onto the machine's own
+  key matrix, one key at a time, exactly as a person would. Nothing is injected
+  into memory and nothing is hurried: the COP scans the keyboard every 20ms, so
+  each key is held for three scans, and a listing arrives at the speed the
+  machine can take it. Esc stops a paste in progress -- which is also the
+  machine's STOP key, the right thing to be reaching for if a paste is going
+  somewhere unintended.
+
+  The map is of what a key produces on THIS machine rather than what is printed
+  on the host's keycap, because the NewBrain moves several characters: the
+  double quote is shift-2, the apostrophe lives on 7, and the bracket keys give
+  ( and ) unshifted. Verified by recording the matrix presses --
+  `10 PRINT "A(1)"` comes out as `1 0 SPACE SHIFT P ... SHIFT 2 SHIFT A [ 1 ]
+  SHIFT 2 ENTER` -- and then end to end, pasting a two-line program that listed
+  and ran verbatim.
+
+  Characters with no key are skipped and counted, never guessed. A wrong
+  character in a listing is worse than a missing one because it is silent.
 - **A nudge when the tape stops between files.** On a tape with more than one
   file, the machine reads the first and goes back to the prompt, where it will
   sit until told what to do. The readout now says so rather than leaving the
