@@ -107,6 +107,40 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **The VF panel latches on the transfer, instead of mirroring RAM.** Messages
+  were flashing past unreadably -- measured over a boot, `NEWBRAIN B` held for
+  22ms on its way to a banner it never finished, and `READY` for 25ms. The
+  self-test patterns held 0.7s and read fine, which is what said the panel
+  could hold and the text path was at fault.
+
+  It was reading `OUTBUFF` every frame. That is a working buffer the ROM
+  composes into; the panel is a latch. The Software Technical Manual is
+  explicit -- the COP's next command is NULLCOM by default, and only "if the
+  command was DISPCOM or TIMCOM" is a transfer performed, "For DISPCOM 18 bytes
+  are transferred. The first 2 bytes are don't care, the remaining 16 are the
+  contents of OUTBUFF." Between transfers the COP goes on showing what it last
+  received; we were watching the ROM's workings instead.
+
+  Latching brings the ROM's own behaviours with it, because it was always doing
+  them and we were looking past them. The window tracks the cursor -- WR copies
+  its 16 bytes from "the window position in the VF or TY buffer", with SETWIN
+  keeping the cursor inside it -- so typing now shows the live line, and a
+  result stays put afterwards instead of blinking by.
+
+  **Latch on the transfer, not the request.** WR only asks, by writing DISPCOM
+  to COPCTL; "the transfer of the data bytes from COPBUFF to the COP is
+  performed by the COP interrupt handler", which writes NULLCOM back on entry
+  and then moves the bytes. Capturing at the request took the buffer a step
+  early and left the panel one keystroke behind the screen -- abcdefgh on the
+  CRT against ABCDEF on the panel.
+
+  NULLCOM is D0, read off the scan: the manual prints a SLASHED zero and every
+  OCR pass mangles it differently -- the Internet Archive's text layer makes it
+  a 9, tesseract an @, a third render a P. DISPCOM is A0, which the manual
+  never states, so that one is measured: across a nine-second boot COPCTL holds
+  D0 for 1742 samples and A0 for 11, and the A0s land exactly on the instants
+  the panel changes.
+
 - **`LOAD` is enough; the quotes have gone.** Jack: *"simply typing 'load'
   instead of 'load\"\"' is sufficient"*. The bare keyword starts a tape load on
   the NewBrain, so the readout says that instead — `Type  LOAD  then press
