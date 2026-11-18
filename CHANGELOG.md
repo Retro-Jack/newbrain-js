@@ -26,6 +26,15 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
   Characters with no key are skipped and counted, never guessed. A wrong
   character in a listing is worse than a missing one because it is silent.
+
+  ▲ **The shortcut collides with the machine.** CONTROL and V are both real
+  keys here, and CONTROL+V is a real editing command -- it turns the cursor
+  into an underline and then walks it around the screen. Pressing Ctrl+V sent
+  that to the matrix before the paste handler ever saw the event. Ctrl+V and
+  Cmd+V are now kept off the matrix, the user's own keys are ignored for the
+  duration of a paste so a still-held modifier cannot land in the middle of it,
+  and the matrix is cleared before typing starts. CONTROL alone still reaches
+  the machine, because on its own that is simply a key the user pressed.
 - **A nudge when the tape stops between files.** On a tape with more than one
   file, the machine reads the first and goes back to the prompt, where it will
   sit until told what to do. The readout now says so rather than leaving the

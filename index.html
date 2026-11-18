@@ -558,6 +558,11 @@ function drawVfd() {
   vfdCtx.shadowBlur = 0;
 }
 
+// Declared here rather than with the paste code below: the key handlers just
+// under this have to know a paste is running so the user's own keys stay out
+// of it.
+let pasting = false;
+
 // ---- keyboard --------------------------------------------------------------
 // The matrix is 16 rows of 4 bits, scanned by the COP420. Mapped by physical
 // key (event.code) so the layout does not depend on the host's keymap.
@@ -579,12 +584,21 @@ const KEYMAP = {
 };
 
 addEventListener('keydown', e => {
+  // The host's paste shortcut must not reach the matrix. CONTROL and V are
+  // both real keys on this machine and CONTROL+V is a real editing command --
+  // it turns the cursor into an underline and then walks it about the screen,
+  // which is what Ctrl+V did here before the paste handler ever saw the event.
+  if ((e.ctrlKey || e.metaKey) && e.code === 'KeyV') { e.preventDefault(); return; }
+  // A paste is typing on the machine's behalf; a key the user is still holding
+  // from the shortcut would land in the middle of it.
+  if (pasting) { e.preventDefault(); return; }
   const k = KEYMAP[e.code];
   if (!k) return;
   e.preventDefault();
   sys.machine.setKey(k[0], k[1], true);
 });
 addEventListener('keyup', e => {
+  if (pasting) { e.preventDefault(); return; }
   const k = KEYMAP[e.code];
   if (!k) return;
   e.preventDefault();
@@ -637,11 +651,13 @@ const PASTE_KEY = (() => {
 // margin at each end -- a short overlap is how a closing quote once came out
 // as a 2.
 const PASTE_HOLD = 60, PASTE_GAP = 60, PASTE_SHIFT_LEAD = 90;
-let pasting = false;
 
 async function pasteText(text) {
   if (pasting) return;
   pasting = true;
+  // Whatever the user was holding to trigger this -- Ctrl, Shift -- is not
+  // part of what they pasted.
+  sys.machine.clearKeys();
   const SHIFT = KEYMAP.ShiftLeft;
   const wait = ms => new Promise(r => setTimeout(r, ms));
   let typed = 0, skipped = 0;
