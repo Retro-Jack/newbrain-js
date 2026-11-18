@@ -33,7 +33,7 @@ distributed here.
 
 The deck is at the bottom right. Press **insert** and pick a tape file, then:
 
-1. Type `LOAD ""` on the machine and press Enter.
+1. Type `LOAD` on the machine and press Enter.
 2. Press **play**.
 
 That order matters, exactly as it does with a real recorder: the machine has to

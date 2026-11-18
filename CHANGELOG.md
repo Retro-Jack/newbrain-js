@@ -107,6 +107,19 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **`LOAD` is enough; the quotes have gone.** Jack: *"simply typing 'load'
+  instead of 'load\"\"' is sufficient"*. The bare keyword starts a tape load on
+  the NewBrain, so the readout says that instead — `Type  LOAD  then press
+  play.` and `Waiting. Type  RUN  or  LOAD  for the next part.` Two fewer
+  characters each, on a display twenty-one columns wide.
+
+  The comment explaining the 0.0692em nudge quoted the old hint as the line
+  that puts quote marks in row one, which it no longer does. The measurement
+  itself is of the face across the whole printable set, not of any one line,
+  so it stands — the comment now says so rather than leaning on an example
+  that has stopped being true.
+
+
 - **The readout was dim because the strokes never filled a pixel.** Not the
   colour, and not the tube behind it. The panel draws at 151x13 -- 9.44px per
   character -- and at that size Segment16C's strokes are thinner than one

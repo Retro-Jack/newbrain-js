@@ -164,7 +164,7 @@
      and "in that order." sat visibly left of the middle for it.
 
      white-space:pre is still wanted: it keeps the double spaces in
-     "Type  LOAD ""  then press play." from collapsing. */
+     "Type  LOAD  then press play." from collapsing. */
   /* grid-column:1 is not decoration. Two lines may be pinned to the same
      row -- "No tape." joins the progress bar on row four -- and an item with
      an explicit row but an automatic column does not stack, it is placed in
@@ -178,9 +178,10 @@
   /* That nudge centres the ink rather than the cells. Seven rows fill the
      window exactly, so the cell grid is flush to both edges -- but the ink
      inside the cells is not centred in them. Measured across the printable
-     set, it runs from the very top of the cell (the quote marks reach it,
-     and "Type  LOAD ""  then press play." puts them in row one) to 1.93px
-     short of the bottom, where the descenders of g j p q y stop. So the
+     set, it runs from the very top of the cell -- the quote marks and the
+     apostrophe reach it, and any line carrying one puts that ink in its row --
+     to 1.93px short of the bottom, where the descenders of g j p q y stop.
+     The measurement is of the face, not of any one line. So the
      readout sat hard against the top of the window with a gap under it,
      top-heavy by 0.138 of a row. Half of that, 0.0692em, splits the
      difference; it is in em so it tracks the type, and the descenders have
@@ -614,7 +615,7 @@ const deck = {
   fileEl:  document.getElementById('tapefile'),
   deckEl:  document.getElementById('tapedeck'),
   // The reels turn only once the transport has been engaged from the panel.
-  // The motor line alone will not do: typing LOAD "" raises it and holds it
+  // The motor line alone will not do: typing LOAD raises it and holds it
   // high while the machine sits waiting for a signal, with nothing in the
   // deck and nothing moving, so the reels would spin at a stopped tape.
   engaged: false,
@@ -843,7 +844,7 @@ deck.fileEl.addEventListener('change', async () => {
     deckHint(`${notTapes[0].name} is not a tape file.`);
   } else {
     deckHint(first
-      ? 'Type  LOAD ""  then press play.'
+      ? 'Type  LOAD  then press play.'
       : `${deck.parts.length} programs on the tape, in that order.`);
   }
   deck.fileEl.value = '';          // so the same file can be added again
@@ -942,7 +943,7 @@ function drawDeck() {
     // next. Nobody is coming to tell them that, so the readout does.
     //
     // It does not say which command, because the deck cannot know. A plain
-    // multi-file tape wants LOAD "" again; a tape fronted by a loader, which
+    // multi-file tape wants LOAD again; a tape fronted by a loader, which
     // is most of them, wants RUN and then fetches the rest itself. Pacman is
     // the second kind, and an earlier version of this line confidently told
     // the user to type the wrong one.
@@ -965,7 +966,7 @@ function drawDeck() {
                        performance.now() - deck.cursorAt < TW_BLINK;
       if (atPrompt && !deck.promptShown) {
         deck.promptShown = true;
-        deckHint('Waiting. Type  RUN  or  LOAD ""  for the next part.');
+        deckHint('Waiting. Type  RUN  or  LOAD  for the next part.');
       }
     } else {
       deck.cursorAt = undefined;
