@@ -62,6 +62,10 @@
      percentages of the part rather than of the page. Move or resize a part
      and its screen goes with it. */
   #monitor, #machine, #tapedeck { position:absolute; }
+  /* The deck owns its stack so its keys can sit behind it: keys 1, deck 2,
+     reels 3. */
+  #tapedeck { isolation:isolate; }
+  #tapedeck img { position:relative; z-index:2; }
   #monitor img, #machine img, #tapedeck img { display:block; width:100%; height:auto; pointer-events:none; }
 
   /* The deck sits above the machine, same width and same left edge, in the
@@ -81,7 +85,7 @@
      bay does not arrive a frame late the first time a tape is ejected.
      The reels go with it. They are part of the cassette, not the deck, so
      there is nothing for them to be drawn on. */
-  #tapedeck img.bare { position:absolute; left:0; top:0; width:100%; opacity:0; }
+  #tapedeck img.bare { position:absolute; left:0; top:0; width:100%; opacity:0; z-index:2; }
   #tapedeck.empty img.bare { opacity:1; }
   #tapedeck.empty i { display:none; }
 
@@ -90,37 +94,42 @@
     background:url(art/deck-reels.webp) 0 0/100% 3700% no-repeat;
     animation:deckreels 3.6s steps(36) infinite;
     animation-play-state:paused;
-    pointer-events:none; z-index:1;
+    pointer-events:none; z-index:3;
   }
   #tapedeck.on i { animation-play-state:running; }
 
-  /* The deck's own keys. Each is a hit area that carries the picture of that
-     key pressed, shown by raising its opacity -- so one small image per key
-     rather than a second copy of the whole deck, which is 9KB against 771KB.
+  /* The deck's own keys. Each one is a real picture of that key, cut from
+     the deck photograph, and the deck itself has had its keys taken out -- so
+     a key is an object sitting in a hole rather than a patch painted over the
+     top of one. It is the hit area too: the deck images are
+     pointer-events:none, so a click passes through them to the key beneath.
 
-     A pressed key sits 15px lower, and the gap it leaves at the top has to
-     hide the un-pressed key underneath, so it cannot simply be transparent.
-     It used to be flattened onto the stage colour, which tied the sprite to
-     ONE page background: on the dark stage here it passed, and anywhere
-     lighter it was a black rectangle floating above the deck.
+     That is what makes a press work. The key simply SINKS. The stack runs
+     keys, then deck, then reels, so a sinking key slides down behind the
+     deck's ledge and the hole it leaves shows whatever is behind the page.
 
-     The gap now carries the deck's own pixels in shadow, with the deck's own
-     alpha -- so it reads as the key sunk into its recess, it is transparent
-     exactly where the deck is transparent, and it composites correctly on any
-     background. */
+     The earlier approach painted the pressed key over the top instead, and
+     the gap it left had to hide the un-pressed key still in the deck photo
+     underneath -- so it could not be transparent, and was flattened onto the
+     stage colour. That tied the artwork to ONE page background: fine on a
+     dark stage, a black rectangle floating above the deck anywhere lighter,
+     which is what it became on GenX-DOS's wallpaper.
+
+     The drop is a share of the key's own height rather than a pixel count, so
+     it holds at whatever size the deck is drawn. */
   #tapedeck .key {
-    position:absolute; z-index:3; cursor:pointer;
+    position:absolute; z-index:1; cursor:pointer;
     background-size:100% 100%; background-repeat:no-repeat;
-    opacity:0;
+    transition:transform .06s ease-out;
   }
-  #tapedeck .key.down { opacity:1; }
+  #tapedeck .key.down { transform:translateY(var(--keydrop, 25%)); }
   #tapedeck .key.off  { cursor:default; }
-  #tapedeck .key[data-key=eject] { background-image:url(art/btn-eject.webp); }
-  #tapedeck .key[data-key=next]  { background-image:url(art/btn-next.webp); }
-  #tapedeck .key[data-key=rew]   { background-image:url(art/btn-rew.webp); }
-  #tapedeck .key[data-key=play]  { background-image:url(art/btn-play.webp); }
-  #tapedeck .key[data-key=ff]    { background-image:url(art/btn-ff.webp); }
-  #tapedeck .key[data-key=rec]   { background-image:url(art/btn-rec.webp); }
+  #tapedeck .key[data-key=eject] { background-image:url(art/key-eject.webp); }
+  #tapedeck .key[data-key=next]  { background-image:url(art/key-next.webp); }
+  #tapedeck .key[data-key=rew]   { background-image:url(art/key-rew.webp); }
+  #tapedeck .key[data-key=play]  { background-image:url(art/key-play.webp); }
+  #tapedeck .key[data-key=ff]    { background-image:url(art/key-ff.webp); }
+  #tapedeck .key[data-key=rec]   { background-image:url(art/key-rec.webp); }
 
   /* The readout in the deck's window: what is on the tape, and in what order.
      Sized in container units so the type scales with the deck rather than
@@ -412,6 +421,8 @@ const reg = await fetch('art/regions.json').then(r => r.json());
   within(document.getElementById('tapewin'), reg.deck.window);
   for (const [k, r] of Object.entries(reg.deck.buttons))
     within(document.querySelector(`#tapedeck .key[data-key="${k}"]`), r);
+  document.getElementById('tapedeck')
+          .style.setProperty('--keydrop', reg.deck.keyDrop + '%');
 }
 
 const names = ['aben191.ic6','cdi3.ic7','ef iss 1.ic8','char eprom iss 1.ic453','cop420-guw.ic419'];

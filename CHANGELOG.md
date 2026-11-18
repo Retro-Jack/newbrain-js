@@ -144,6 +144,23 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **The deck's keys are objects now, not patches painted over the deck.** Each
+  key has been cut out of the deck photograph as its own sprite and the deck
+  has had its keys taken out, so a key sits in a hole rather than on top of
+  one. It is the hit area too -- the deck images are pointer-events:none, so a
+  click falls through to the key beneath.
+
+  A press is then just the key SINKING. The stack runs keys, deck, reels, so a
+  sinking key slides down behind the deck's ledge and the hole it leaves shows
+  whatever is behind the page. No pressed-key sprites at all any more: the
+  six btn-*.webp are gone, replaced by six key-*.webp, and the drop is a share
+  of the key's own height so it holds at any size the deck is drawn.
+
+  This replaces yesterday's shadow-in-the-gap fix, which was treating the
+  symptom. Both it and the stage-colour flattening before it existed to hide
+  the un-pressed key still sitting in the deck photo. Take the key out of the
+  photo and there is nothing to hide.
+
 - **The deck's keys no longer carry a page background with them.** A pressed
   key sits 15px lower and the gap it leaves has to hide the un-pressed key
   underneath, so it cannot simply be transparent -- that was the reasoning that
