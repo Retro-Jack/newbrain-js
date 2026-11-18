@@ -421,6 +421,18 @@ versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The dark band beside a pressed key is gone for good.** The crevice between
+  two keys belongs to neither of them -- the keys touch, and it is the shadow
+  they cast together -- so whichever key owned it drew it at full height when
+  its neighbour sank. Giving it to the other key, or splitting it, only moved
+  the band; lifting the pressed key above its neighbours did not help either,
+  because the standing key still painted its own copy above where the sunk one
+  landed.
+
+  It is now its own element, one per boundary, and it is simply not there
+  unless BOTH of its keys are up -- driven by :has(), so it holds however
+  .down gets set. At rest nothing has changed.
+
 - **A pressed key no longer strands a dark line beside it.** The keys touch --
   at the top of the row the whole six are one unbroken opaque run in the
   photograph -- so what looks like a gap between two of them is the dark

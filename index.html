@@ -129,6 +129,39 @@
      redraw its own copy at full height, stranding a dark line beside a key
      that is no longer there. */
   #tapedeck .key.down { z-index:1; transform:translateY(var(--keydrop, 25%)); }
+
+  /* The crevice between two keys. The keys TOUCH -- across the top of the row
+     the whole six are one unbroken opaque run in the photograph -- so the dark
+     line between any two of them is the shadow they cast together, and it
+     belongs to neither. Giving it to a key meant that whenever its neighbour
+     sank, the key still drew the crevice at full height and left a dark band
+     standing beside a key that was no longer there.
+
+     So it is its own element, and it is simply not there unless BOTH of its
+     keys are up. Done with :has() so it holds however .down gets set; where
+     :has() is missing the seams just stay put, which is the old behaviour
+     rather than a broken one. */
+  #tapedeck .seam {
+    position:absolute; z-index:0; pointer-events:none;
+    background-size:100% 100%; background-repeat:no-repeat;
+  }
+  #tapedeck .seam[data-left=eject][data-right=next] { background-image:url(art/seam-eject-next.webp); }
+  #tapedeck .seam[data-left=next][data-right=rew]   { background-image:url(art/seam-next-rew.webp); }
+  #tapedeck .seam[data-left=rew][data-right=play]   { background-image:url(art/seam-rew-play.webp); }
+  #tapedeck .seam[data-left=play][data-right=ff]    { background-image:url(art/seam-play-ff.webp); }
+  #tapedeck .seam[data-left=ff][data-right=rec]     { background-image:url(art/seam-ff-rec.webp); }
+  #tapedeck:has(.key[data-key=eject].down) .seam[data-left=eject],
+  #tapedeck:has(.key[data-key=eject].down) .seam[data-right=eject],
+  #tapedeck:has(.key[data-key=next].down)  .seam[data-left=next],
+  #tapedeck:has(.key[data-key=next].down)  .seam[data-right=next],
+  #tapedeck:has(.key[data-key=rew].down)   .seam[data-left=rew],
+  #tapedeck:has(.key[data-key=rew].down)   .seam[data-right=rew],
+  #tapedeck:has(.key[data-key=play].down)  .seam[data-left=play],
+  #tapedeck:has(.key[data-key=play].down)  .seam[data-right=play],
+  #tapedeck:has(.key[data-key=ff].down)    .seam[data-left=ff],
+  #tapedeck:has(.key[data-key=ff].down)    .seam[data-right=ff],
+  #tapedeck:has(.key[data-key=rec].down)   .seam[data-left=rec],
+  #tapedeck:has(.key[data-key=rec].down)   .seam[data-right=rec] { opacity:0; }
   #tapedeck .key.off  { cursor:default; }
   #tapedeck .key[data-key=eject] { background-image:url(art/key-eject.webp); }
   #tapedeck .key[data-key=next]  { background-image:url(art/key-next.webp); }
@@ -329,6 +362,11 @@
     <span class="key" data-key="play"  title="Play"></span>
     <span class="key" data-key="ff"    title="Fast forward"></span>
     <span class="key" data-key="rec"   title="Save what the machine has recorded"></span>
+    <span class="seam" data-left="eject" data-right="next"></span>
+    <span class="seam" data-left="next"  data-right="rew"></span>
+    <span class="seam" data-left="rew"   data-right="play"></span>
+    <span class="seam" data-left="play"  data-right="ff"></span>
+    <span class="seam" data-left="ff"    data-right="rec"></span>
     <div id="tapewin" class="nohint notape" aria-hidden="true">
       <div id="twhint"><span></span></div>
       <div id="twsep"></div>
@@ -427,6 +465,9 @@ const reg = await fetch('art/regions.json').then(r => r.json());
   within(document.getElementById('tapewin'), reg.deck.window);
   for (const [k, r] of Object.entries(reg.deck.buttons))
     within(document.querySelector(`#tapedeck .key[data-key="${k}"]`), r);
+  for (const sm of reg.deck.seams || [])
+    within(document.querySelector(
+      `#tapedeck .seam[data-left="${sm.from}"][data-right="${sm.to}"]`), sm);
   document.getElementById('tapedeck')
           .style.setProperty('--keydrop', reg.deck.keyDrop + '%');
 }
